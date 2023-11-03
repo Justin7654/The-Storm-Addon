@@ -8,7 +8,7 @@ time = { -- the time unit in ticks, irl time, not in game
 	hour = 216000,
 	day = 5184000
 }
-
+--Test
 g_savedata = {
     tick_counter = 1,
     debug = false,
