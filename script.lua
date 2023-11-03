@@ -147,7 +147,8 @@ function tickStorm()
                     
                     if distanceFrom < 6000 then --No idea what the actual 
                         printDebug("Volcano triggered near "..server.getPlayerName(player.id)..", Watch out!", true, -1)
-                        success = server.spawnVolcano(volcanoPos)
+                        ---@diagnostic disable-next-line: missing-parameter
+                        success = server.spawnVolcano(volcanoPos) --bug in lifeboat API, there is no 2nd parameter for magnitude
                     end
 
                     ::continue::
@@ -398,7 +399,6 @@ function setupStartingConditions()
 end
 
 --- Fails a vehicles power temporary
---- @param vehicle number The vehicle to fail
 --- @param length number The length in ticks to fail the vehicle for
 function failVehiclePower(vehicle, length)
     length = length or (60*time.second)
