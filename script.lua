@@ -8,7 +8,7 @@ time = { -- the time unit in ticks, irl time, not in game
 	hour = 216000,
 	day = 5184000
 }
---Test
+
 g_savedata = {
     tick_counter = 1,
     debug = false,
@@ -17,6 +17,7 @@ g_savedata = {
         HELL_MODE = property.checkbox("Hell Mode", false),  --Makes storms completly break the game but looks cool
         VOLCANOS = property.checkbox("Volcanos More Active During Storm", true),
         POWER_FAILURES = property.checkbox("Random temporary vehicle power failures", true),
+        DYNAMIC_MUSIC = property.checkbox("Dynamic Music Mood", true), 
         COOLDOWN_TIME = property.slider("Cooldown (minutes)", 5, 60, 1, 30)*time.minute, --The cooldown between storms
         START_CHANCE = property.slider("Storm Chance Per minute (%)", 0, 100, 5, 10),  --The chance every 60s that a storm can start
         MIN_LENGTH = property.slider("Min storm length (minutes)", 5, 60, 5, 5)*time.minute, --Min length a storm can last
@@ -226,6 +227,8 @@ end
 --- Handles music mood, high music mood if not at in a shelter/owned tile during a storm and low mood if in a shelter/owned tile
 function tickMusic()
     if not isTickID(0,30) or g_savedata.storm.active == false then return end
+    if g_savedata.settings.DYNAMIC_MUSIC ~= true or g_savedata.settings.DYNAMIC_MUSIC ~= "true" then return end --Both string and bool to support command changing it
+    
     shelterTag = "shelter" --The tag used to mark shelters
     for _, player in pairs(server.getPlayers()) do
         playerPos = server.getPlayerPos(player.id) 
