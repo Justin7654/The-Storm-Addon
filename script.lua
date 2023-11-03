@@ -16,7 +16,7 @@ g_savedata = {
     settings = {
         HELL_MODE = property.checkbox("Hell Mode", false),  --Makes storms completly break the game but looks cool
         VOLCANOS = property.checkbox("Volcanos More Active During Storm", true),
-        POWER_FAILURES = property.checkbox("Random temporary vehicle power failures", true),
+        POWER_FAILURES = property.checkbox("Random vehicle power failures", true),
         DYNAMIC_MUSIC = property.checkbox("Dynamic Music Mood", true), 
         COOLDOWN_TIME = property.slider("Cooldown (minutes)", 5, 60, 1, 30)*time.minute, --The cooldown between storms
         START_CHANCE = property.slider("Storm Chance Per minute (%)", 0, 100, 5, 10),  --The chance every 60s that a storm can start
@@ -26,7 +26,7 @@ g_savedata = {
         RAIN_AMOUNT = property.slider("Storm Rain Amount (%)", 50, 100, 10, 100)/100, --The peak rain intensity of a storm
         WIND_AMOUNT = property.slider("Storm Wind Amount (%)", 50, 150, 10, 120)/100, --The peak wind intensity of a storm
         FOG_AMOUNT = property.slider("Storm Fog Amount (%)", 50, 100, 10, 80)/100, --The peak fog intensity of a storm
-        POWER_FAILURE_CHANCE = property.slider("Power Failure Chance (% every Second)", 0.5, 10, 0.5, 1), --The chance that a vehicle will fail during a storm
+        POWER_FAILURE_CHANCE = property.slider("Power Failure Chance (% every Second)", 0.1,2, 0.1, 0.3), --The chance that a vehicle will fail during a storm
     },
     storm = {
         ["active"] = false,
@@ -64,6 +64,7 @@ function onTick(game_ticks)
     g_savedata.tick_counter = g_savedata.tick_counter + 1
     tickStorm()
     tickPowerFailures()
+    tickMusic()
 end
   
 --- Handles stuff like winding storms, random storms, ending storms, stuff like that
@@ -157,6 +158,7 @@ function tickStorm()
         --Random vehicle power failures
         if g_savedata.settings.POWER_FAILURES then
             for _, vehicle in pairs(g_savedata.playerVehicles) do
+                math.randomseed(_, g_savedata.tick_counter) --Hopefully will fix every vehicle failing at once with the same mode...
                 if randomRange(0,100)<tonumber(g_savedata.settings.POWER_FAILURE_CHANCE) then goto continue end
                 if server.getVehicleSimulating(vehicle.id) == false then goto continue end
                 --Check to see if its already failed
@@ -165,7 +167,12 @@ function tickStorm()
                 end
                 
                 --Fail the vehicle
-                length = randomRange(5,180)*time.second
+                if randomRange(1,2) == 1 then
+                    length = randomRange(7, 20)*time.second
+                else
+                    printDebug("Uh oh! This blackout is going to last awhile...", true, -1)
+                    length = randomRange(20,250)*time.second
+                end
                 printDebug("Failing vehicle with id "..tostring(vehicle.id).." for "..tostring(length).." ticks", true)
                 is_success = failVehiclePower(vehicle.id, length)
 
@@ -214,6 +221,16 @@ end
 function tickPowerFailures()
     if not isTickID(0,5) then return end
     for i, failure in pairs(g_savedata.powerFailures) do
+        --Check if the vehicle still exists
+        is_simulating, is_success = server.getVehicleSimulating(failure.vehicleID)
+        if is_success == false then
+            printDebug("Removed vehicle with id "..tostring(failure.vehicleID).." from power table because it no longer exists", true)
+            table.remove(g_savedata.powerFailures, i)
+            goto continue;
+        end
+        if is_simulating == false then goto continue end --Wait for it to simulate again before setting it back to prevent issues
+
+        --Check if its time for it to expire
         if failure.expire <= g_savedata.tick_counter then
             printDebug("Recovered vehicle with id "..tostring(failure.vehicleID).." from power failure", true)
             for _, battery in pairs(failure.originalStates) do
@@ -221,25 +238,25 @@ function tickPowerFailures()
             end
             table.remove(g_savedata.powerFailures, i)
         end
+        ::continue::
     end
 end
 
 --- Handles music mood, high music mood if not at in a shelter/owned tile during a storm and low mood if in a shelter/owned tile
 function tickMusic()
-    if not isTickID(0,30) or g_savedata.storm.active == false then return end
-    if g_savedata.settings.DYNAMIC_MUSIC ~= true or g_savedata.settings.DYNAMIC_MUSIC ~= "true" then return end --Both string and bool to support command changing it
-    
+    if not isTickID(0,3*time.second) or g_savedata.storm.active == false then return end
+    if g_savedata.settings.DYNAMIC_MUSIC ~= true and g_savedata.settings.DYNAMIC_MUSIC ~= "true" then return end --Both string and bool to support command changing it
     shelterTag = "shelter" --The tag used to mark shelters
     for _, player in pairs(server.getPlayers()) do
         playerPos = server.getPlayerPos(player.id) 
         isOwned = server.getTilePurchased(playerPos)
         isShelter = server.isInZone(playerPos, shelterTag)
         if isOwned or isShelter then
-            if g_savedata.playerMoodStates[player.id] ~= 1 then printDebug(player.name.." audio set to mood_high") end
+            if g_savedata.playerMoodStates[player.id] ~= 1 then printDebug(player.name.." audio set to mood_low", true) end
             server.setAudioMood(player.id, 1)
             g_savedata.playerMoodStates[player.id] = 1
         else
-            if g_savedata.playerMoodStates[player.id] ~= 3 then printDebug(player.name.." audio set to mood_low") end
+            if g_savedata.playerMoodStates[player.id] ~= 3 then printDebug(player.name.." audio set to mood_high", true) end
             server.setAudioMood(player.id, 3)
             g_savedata.playerMoodStates[player.id] = 3
         end
@@ -362,6 +379,11 @@ function endStorm()
     storm = g_savedata.storm
     storm.stage = "windDown";
     g_savedata.storm["tweenStart"] = g_savedata.tick_counter
+    ---End all current blackouts
+    for _, failure in pairs(g_savedata.powerFailures) do
+        failure.expire = g_savedata.tick_counter
+    end
+
     setupStartingConditions()
 end
 

@@ -1,0 +1,236 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<playlist folder_path="data/missions/TheStorm" file_store="4" name="The Storm">
+	<locations location_id_counter="25" component_id_counter="32">
+		<locations>
+			<l id="4" tile="data/tiles/island12.xml" name="STARTER BASE" is_env_mod="true" env_mod_spawn_num="1">
+				<components>
+					<c component_type="10" id="7" cargo_zone_import_cargo_type="shelter" display_name="shelter" dynamic_object_type="2" character_outfit_category="11" character_type="1" vehicle_file_store="1">
+						<spawn_transform 30="-56.548573" 31="25.879786" 32="-2.183861"/>
+						<spawn_bounds>
+							<min x="-3.775798" y="-4.13038" z="-3.986846"/>
+							<max x="3.775798" y="4.13038" z="3.986846"/>
+						</spawn_bounds>
+						<graph_links/>
+					</c>
+				</components>
+			</l>
+			<l id="5" tile="data/tiles/island_15.xml" name="CREATIVE BASE" is_env_mod="true" env_mod_spawn_num="1">
+				<components>
+					<c component_type="10" id="8" cargo_zone_import_cargo_type="shelter" display_name="shelter" dynamic_object_type="2" character_outfit_category="11" character_type="1" vehicle_file_store="1">
+						<spawn_transform 30="-264.51709" 31="14.615344" 32="51.294849"/>
+						<spawn_bounds>
+							<min x="-28.364932" y="-12.093607" z="-29.422487"/>
+							<max x="28.364932" y="12.093607" z="29.422487"/>
+						</spawn_bounds>
+						<graph_links/>
+					</c>
+					<c component_type="10" id="9" cargo_zone_import_cargo_type="shelter" display_name="shelter" dynamic_object_type="2" character_outfit_category="11" character_type="1" vehicle_file_store="1">
+						<spawn_transform 30="-226.819077" 31="10.814642" 32="98.392403"/>
+						<spawn_bounds>
+							<min x="-5.216821" y="-6.315693" z="-7.988208"/>
+							<max x="5.216821" y="6.315693" z="7.988208"/>
+						</spawn_bounds>
+						<graph_links/>
+					</c>
+				</components>
+			</l>
+			<l id="6" tile="data/tiles/test_tile.xml" name="HELICOPTER BASE" is_env_mod="true" env_mod_spawn_num="1">
+				<components>
+					<c component_type="10" id="10" cargo_zone_import_cargo_type="shelter" display_name="shelter" dynamic_object_type="2" character_outfit_category="11" character_type="1" vehicle_file_store="1">
+						<spawn_transform 30="-34.8265" 31="32.100002" 32="4.906394"/>
+						<spawn_bounds>
+							<min x="-6.300679" y="-18.048342" z="-6.513379"/>
+							<max x="6.300679" y="18.048342" z="6.513379"/>
+						</spawn_bounds>
+						<graph_links/>
+					</c>
+					<c component_type="10" id="11" cargo_zone_import_cargo_type="shelter" display_name="shelter" dynamic_object_type="2" character_outfit_category="11" character_type="1" vehicle_file_store="1">
+						<spawn_transform 30="8.91466" 31="10.807899" 32="-16.218706"/>
+						<spawn_bounds>
+							<min x="-15.337413" y="-4.141985" z="-14.836321"/>
+							<max x="15.337413" y="4.141985" z="14.836321"/>
+						</spawn_bounds>
+						<graph_links/>
+					</c>
+				</components>
+			</l>
+			<l id="7" tile="data/tiles/island_25.xml" name="HARBOUR BASE" is_env_mod="true" env_mod_spawn_num="1">
+				<components>
+					<c component_type="10" id="12" cargo_zone_import_cargo_type="shelter" display_name="shelter" dynamic_object_type="2" character_outfit_category="11" character_type="1" vehicle_file_store="1">
+						<spawn_transform 30="85.149963" 31="8.357075" 32="-41.40316"/>
+						<spawn_bounds>
+							<min x="-9.893261" y="-3.2236" z="-11.412185"/>
+							<max x="9.893261" y="3.2236" z="11.412185"/>
+						</spawn_bounds>
+						<graph_links/>
+					</c>
+				</components>
+			</l>
+			<l id="8" tile="data/tiles/island_24.xml" name="AIRSTRIP BASE" is_env_mod="true" env_mod_spawn_num="1">
+				<components>
+					<c component_type="10" id="13" cargo_zone_import_cargo_type="shelter" display_name="shelter" dynamic_object_type="2" character_outfit_category="11" character_type="1" vehicle_file_store="1">
+						<spawn_transform 30="5.548872" 31="26.720482" 32="-4.484213"/>
+						<spawn_bounds>
+							<min x="-7.519804" y="-22.316613" z="-8.641237"/>
+							<max x="7.519804" y="22.316613" z="8.641237"/>
+						</spawn_bounds>
+						<graph_links/>
+					</c>
+					<c component_type="10" id="14" cargo_zone_import_cargo_type="shelter" display_name="shelter" dynamic_object_type="2" character_outfit_category="11" character_type="1" vehicle_file_store="1">
+						<spawn_transform 30="2.550192" 31="10.011811" 32="22.450531"/>
+						<spawn_bounds>
+							<min x="-11.629725" y="-5" z="-16.854207"/>
+							<max x="11.629725" y="5" z="16.854207"/>
+						</spawn_bounds>
+						<graph_links/>
+					</c>
+				</components>
+			</l>
+			<l id="10" tile="data/tiles/island_17.xml" name="SCIENCE" is_env_mod="true" env_mod_spawn_num="1">
+				<components>
+					<c component_type="10" id="15" cargo_zone_import_cargo_type="shelter" display_name="shelter" dynamic_object_type="2" character_outfit_category="11" character_type="1" vehicle_file_store="1">
+						<spawn_transform 30="60.207451" 31="22.100819" 32="11.610069"/>
+						<spawn_bounds>
+							<min x="-6.052441" y="-4.34875" z="-15.632336"/>
+							<max x="6.052441" y="4.34875" z="15.632336"/>
+						</spawn_bounds>
+						<graph_links/>
+					</c>
+				</components>
+			</l>
+			<l id="11" tile="data/tiles/island_27_airbase.xml" name="AIRPORT" is_env_mod="true" env_mod_spawn_num="1">
+				<components>
+					<c component_type="10" id="16" cargo_zone_import_cargo_type="shelter" display_name="shelter" dynamic_object_type="2" character_outfit_category="11" character_type="1" vehicle_file_store="1">
+						<spawn_transform 30="-22.880056" 31="26.740211" 32="108.962463"/>
+						<spawn_bounds>
+							<min x="-5.292552" y="-3.512629" z="-3.409867"/>
+							<max x="5.292552" y="3.512629" z="3.409867"/>
+						</spawn_bounds>
+						<graph_links/>
+					</c>
+				</components>
+			</l>
+			<l id="13" tile="data/tiles/island_26_fishing.xml" name="FISHING VILLAGE" is_env_mod="true" env_mod_spawn_num="1">
+				<components>
+					<c component_type="10" id="18" cargo_zone_import_cargo_type="shelter" display_name="shelter" dynamic_object_type="2" character_outfit_category="11" character_type="1" vehicle_file_store="1">
+						<spawn_transform 30="-50.942024" 31="7.393006" 32="-59.528278"/>
+						<spawn_bounds>
+							<min x="-3.436594" y="-3.777632" z="-3.409855"/>
+							<max x="3.436594" y="3.777632" z="3.409855"/>
+						</spawn_bounds>
+						<graph_links/>
+					</c>
+					<c component_type="10" id="19" cargo_zone_import_cargo_type="shelter" display_name="shelter" dynamic_object_type="2" character_outfit_category="11" character_type="1" vehicle_file_store="1">
+						<spawn_transform 30="27.256472" 31="6.39377" 32="-33.23737"/>
+						<spawn_bounds>
+							<min x="-14.844612" y="-2.571741" z="-2.892868"/>
+							<max x="14.844612" y="2.571741" z="2.892868"/>
+						</spawn_bounds>
+						<graph_links/>
+					</c>
+					<c component_type="10" id="23" cargo_zone_import_cargo_type="shelter" display_name="shelter" dynamic_object_type="2" character_outfit_category="11" character_type="1" vehicle_file_store="1">
+						<spawn_transform 00="0.939784" 02="0.341769" 20="-0.341769" 22="0.939784" 30="1.898971" 31="6.33298" 32="-37.196423"/>
+						<spawn_bounds>
+							<min x="-7.788614" y="-2.571741" z="-2.892868"/>
+							<max x="7.788614" y="2.571741" z="2.892868"/>
+						</spawn_bounds>
+						<graph_links/>
+					</c>
+				</components>
+			</l>
+			<l id="16" tile="data/tiles/wind_turbine.xml" name="WIND TURBINE" is_env_mod="true" env_mod_spawn_num="1">
+				<components>
+					<c component_type="10" id="24" cargo_zone_import_cargo_type="shelter" display_name="shelter" dynamic_object_type="2" character_outfit_category="11" character_type="1" vehicle_file_store="1">
+						<spawn_transform 30="-1.204737" 31="70.3284" 32="-0.0846"/>
+						<spawn_bounds>
+							<min x="-4.674528" y="-50.328172" z="-3.955983"/>
+							<max x="4.674528" y="50.328172" z="3.955983"/>
+						</spawn_bounds>
+						<graph_links/>
+					</c>
+					<c component_type="10" id="25" cargo_zone_import_cargo_type="shelter" display_name="shelter" dynamic_object_type="2" character_outfit_category="11" character_type="1" vehicle_file_store="1">
+						<spawn_transform 30="-3.866005" 31="117.531128" 32="-0.066366"/>
+						<spawn_bounds>
+							<min x="-9.9773" y="-3.774722" z="-4.01552"/>
+							<max x="9.9773" y="3.774722" z="4.01552"/>
+						</spawn_bounds>
+						<graph_links/>
+					</c>
+				</components>
+			</l>
+			<l id="17" tile="data/tiles/oil_rig.xml" name="SMALL OIL RIG" is_env_mod="true" env_mod_spawn_num="1">
+				<components>
+					<c component_type="10" id="26" cargo_zone_import_cargo_type="shelter" display_name="shelter" dynamic_object_type="2" character_outfit_category="11" character_type="1" vehicle_file_store="1">
+						<spawn_transform 30="-1.854131" 31="13.60948" 32="4.599153"/>
+						<spawn_bounds>
+							<min x="-6.286519" y="-2.954428" z="-3.231282"/>
+							<max x="6.286519" y="2.954428" z="3.231282"/>
+						</spawn_bounds>
+						<graph_links/>
+					</c>
+				</components>
+			</l>
+			<l id="18" tile="data/tiles/oil_rig_medium.xml" name="MEDIUM OIL RIG" is_env_mod="true" env_mod_spawn_num="1">
+				<components>
+					<c component_type="10" id="27" cargo_zone_import_cargo_type="shelter" display_name="shelter" dynamic_object_type="2" character_outfit_category="11" character_type="1" vehicle_file_store="1">
+						<spawn_transform 30="6.804215" 31="24.189878" 32="13.821053"/>
+						<spawn_bounds>
+							<min x="-9.692934" y="-6.25746" z="-2.926981"/>
+							<max x="9.692934" y="6.25746" z="2.926981"/>
+						</spawn_bounds>
+						<graph_links/>
+					</c>
+				</components>
+			</l>
+			<l id="23" tile="data/tiles/island_39_observatory.xml" name="OBSERVATORY" is_env_mod="true" env_mod_spawn_num="1">
+				<components>
+					<c component_type="10" id="28" cargo_zone_import_cargo_type="shelter" display_name="shelter" dynamic_object_type="2" character_outfit_category="11" character_type="1" vehicle_file_store="1">
+						<spawn_transform 00="0.827856" 02="0.560941" 20="-0.560941" 22="0.827856" 30="34.750713" 31="10.943048" 32="41.424053"/>
+						<spawn_bounds>
+							<min x="-4.041431" y="-3.525918" z="-9.828455"/>
+							<max x="4.041431" y="3.525918" z="9.828455"/>
+						</spawn_bounds>
+						<graph_links/>
+					</c>
+				</components>
+			</l>
+			<l id="24" tile="data/tiles/island_34_military.xml" name="MILITARY BASE" is_env_mod="true" env_mod_spawn_num="1">
+				<components>
+					<c component_type="10" id="29" cargo_zone_import_cargo_type="shelter" display_name="shelter" dynamic_object_type="2" character_outfit_category="11" character_type="1" vehicle_file_store="1">
+						<spawn_transform 30="-50.619312" 31="26.677456" 32="59.447655"/>
+						<spawn_bounds>
+							<min x="-38.8102" y="-5.236312" z="-39.021215"/>
+							<max x="38.8102" y="5.236312" z="39.021215"/>
+						</spawn_bounds>
+						<graph_links/>
+					</c>
+					<c component_type="10" id="30" cargo_zone_import_cargo_type="shelter" display_name="shelter" dynamic_object_type="2" character_outfit_category="11" character_type="1" vehicle_file_store="1">
+						<spawn_transform 30="-169.720917" 31="30.237448" 32="-88.509789"/>
+						<spawn_bounds>
+							<min x="-7.191909" y="-8.979377" z="-6.823367"/>
+							<max x="7.191909" y="8.979377" z="6.823367"/>
+						</spawn_bounds>
+						<graph_links/>
+					</c>
+					<c component_type="10" id="31" cargo_zone_import_cargo_type="shelter" display_name="shelter" dynamic_object_type="2" character_outfit_category="11" character_type="1" vehicle_file_store="1">
+						<spawn_transform 00="0.862504" 02="-0.50605" 20="0.50605" 22="0.862504" 30="111.024879" 31="31.479832" 32="-3.86346"/>
+						<spawn_bounds>
+							<min x="-25.764969" y="-9.587054" z="-50.365382"/>
+							<max x="25.764969" y="9.587054" z="50.365382"/>
+						</spawn_bounds>
+						<graph_links/>
+					</c>
+					<c component_type="10" id="32" cargo_zone_import_cargo_type="shelter" display_name="shelter" dynamic_object_type="2" character_outfit_category="11" character_type="1" vehicle_file_store="1">
+						<spawn_transform 00="0.856119" 02="-0.51678" 20="0.51678" 22="0.856119" 30="70.748184" 31="24.900387" 32="-23.766266"/>
+						<spawn_bounds>
+							<min x="-3.508216" y="-2.937845" z="-6.528236"/>
+							<max x="3.508216" y="2.937845" z="6.528236"/>
+						</spawn_bounds>
+						<graph_links/>
+					</c>
+				</components>
+			</l>
+		</locations>
+	</locations>
+</playlist>
+
