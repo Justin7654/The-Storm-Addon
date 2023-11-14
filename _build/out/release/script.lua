@@ -1,4 +1,5 @@
  
+
 ---@diagnostic disable: undefined-doc-param
 -- Author: Justin
 -- GitHub: <GithubLink>
@@ -15,7 +16,6 @@ g_savedata = {
     debug = false,
     cooldown = 0,
     settings = {
-        HELL_MODE = property.checkbox("Hell Mode", false),  --Makes storms completly break the game but looks cool
         VOLCANOS = property.checkbox("Volcanos More Active During Storm", true),
         POWER_FAILURES = property.checkbox("Random vehicle power failures", true),
         DYNAMIC_MUSIC = property.checkbox("Dynamic Music Mood", true), 
@@ -52,13 +52,25 @@ g_savedata = {
     } 
 }
 
+settingConversionData = {
+    VOLCANOS = "bool",
+    POWER_FAILURES = "bool",
+    DYNAMIC_MUSIC = "bool",
+    COOLDOWN_TIME = "number",
+    START_CHANCE = "number",
+    MIN_LENGTH = "number",
+    MAX_LENGTH = "number",
+    WIND_LENGTH = "number",
+    RAIN_AMOUNT = "number",
+    WIND_AMOUNT = "number",
+    FOG_AMOUNT = "number",
+    POWER_FAILURE_CHANCE = "number",
+}
+
 
 function onCreate(is_world_create)
     if g_savedata.settings.MIN_LENGTH > g_savedata.settings.MAX_LENGTH then g_savedata.settings.MIN_LENGTH = g_savedata.settings.MAX_LENGTH end
     if g_savedata.settings.VOLCANOS == nil then g_savedata.settings.VOLCANOS = true end
-
-    --Check for events
-    date = server.getDateValue()
 end
 
 function onTick(game_ticks)
@@ -160,8 +172,7 @@ function tickStorm()
         --Random vehicle power failures
         if g_savedata.settings.POWER_FAILURES then
             for _, vehicle in pairs(g_savedata.playerVehicles) do
-                math.randomseed(_, g_savedata.tick_counter) --Hopefully will fix every vehicle failing at once with the same mode...
-                if randomRange(0,100)<tonumber(g_savedata.settings.POWER_FAILURE_CHANCE) then goto continue end
+                if not randomChance(g_savedata.settings.POWER_FAILURE_CHANCE, _) then goto continue end
                 if server.getVehicleSimulating(vehicle.id) == false then goto continue end
                 --Check to see if its already failed
                 for _, failure in pairs(g_savedata.powerFailures) do
@@ -170,10 +181,10 @@ function tickStorm()
                 
                 --Fail the vehicle
                 if randomRange(1,2) == 1 then
-                    length = randomRange(7, 20)*time.second
+                    length = randomRange(3, 14)*time.second
                 else
                     printDebug("Uh oh! This blackout is going to last awhile...", true, -1)
-                    length = randomRange(20,250)*time.second
+                    length = randomRange(20,150)*time.second
                 end
                 printDebug("Failing vehicle with id "..tostring(vehicle.id).." for "..tostring(length).." ticks", true)
                 is_success = failVehiclePower(vehicle.id, length)
@@ -286,7 +297,7 @@ end
 
 function onCustomCommand(full_message, peer_id, is_admin, is_auth, prefix, command, ...)    
     if prefix ~= "?storm" or not is_admin then return end
-    printDebug("Command Entered: "..full_message..". From peer ".. tostring(peer_id), false, -1)
+    printDebug("Command Entered: "..full_message..". From peer ".. tostring(peer_id), false, 0)
 
     local arg = table.pack(...)
 
@@ -314,9 +325,26 @@ function onCustomCommand(full_message, peer_id, is_admin, is_auth, prefix, comma
         elseif arg[2] == nil then --Entered a valid setting name but didnt provide a value to set it to, return the settings current value
             printDebug('Current value for setting "'..arg[1]..'": '..g_savedata.settings[arg[1]], false, peer_id)
         else
+            -- Convert the value to the correct type
+            settingType = settingConversionData[arg[1]]
+            if settingType == "bool" then
+                arg[2] = arg[2].lower(arg[2])
+                if arg[2] == "true" or arg[2] == "on" or arg[2] == "1" then
+                    arg[2] = true
+                elseif arg[2] == "false" or arg[2] == "off" or arg[2] == "0" then
+                    arg[2] = false
+                else
+                    printDebug("Invalid value! Setting "..arg[1].." requires a boolean value (true/false)", false, peer_id)
+                    return
+                end
+            else if settingType == "number" then
+                arg[2] = tonumber(arg[2])
+            end
+            --Set the setting
             g_savedata.settings[arg[1]] = arg[2]
             printDebug('Updated setting "'..arg[1]..'" value to "'..arg[2]..'" successfully!', false, peer_id)
         end
+    end
     elseif(command == "sample") then
         sampleWeather(server.getPlayerPos(peer_id))
     elseif(command == "panic") then
@@ -452,12 +480,22 @@ function tween(startVal, targetVal, position, length)
     return startVal + (targetVal - startVal) * interpolationFactor;
 end
 
+--- @param percent number The percent chance that it will return true
+--- @param seed number The seed to use for the random number generator
+function randomChance(percent, seed)
+    math.randomseed(server.getTimeMillisec(), seed or 0)
+    printDebug("Seeding random number generator with seed "..tostring(server.getTimeMillisec)..", "..tostring(seed), true)
+    number = randomRange(0,99)
+    result = number < percent
+    if result then printDebug("Random chance passed! "..tostring(number).." is less than "..tostring(percent), false) end
+    return result
+end
+
 --- Generates a random number between the given ranges
 --- @param min number the min number
 --- @param max number the max number
 --- @return number randomNumber the random number generated
 function randomRange(min, max)
-    math.randomseed(server.getTimeMillisec())
     return math.random(math.floor(min), math.ceil(max))
 end
 
@@ -468,7 +506,9 @@ end
 function printDebug(message, requiresDebug, peer_id)
     if requiresDebug == nil then requiresDebug = true end
     if((requiresDebug and g_savedata.debug) or requiresDebug == false) then
-        if type(message) == "table" then message = stringFromTable(message) end
+        if type(message) == "table" then
+            message = stringFromTable(message)
+        end
         server.announce("The Storm", message, peer_id or -1)
     end
 end
