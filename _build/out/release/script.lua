@@ -13,7 +13,9 @@ time = { -- the time unit in ticks, irl time, not in game
 
 g_savedata = {
     tick_counter = 1,
+    powerFailureLoopSmoothing = 1,
     debug = false,
+    superDebug = false,
     cooldown = 0,
     settings = {
         VOLCANOS = property.checkbox("Volcanos More Active During Storm", true),
@@ -49,7 +51,7 @@ g_savedata = {
     },
     playerMoodStates = {
 
-    } 
+    },
 }
 
 settingConversionData = {
@@ -100,7 +102,7 @@ function tickStorm()
 
     --Do stuff with the storm based on stage
     if g_savedata.storm.active == false then return end
-    if not isTickID(0,3) then return end
+    if not isTickID(0,4) then return end
 
     settings = g_savedata.settings
     storm = g_savedata.storm
@@ -170,27 +172,36 @@ function tickStorm()
         end
 
         --Random vehicle power failures
-        if g_savedata.settings.POWER_FAILURES then
-            for _, vehicle in pairs(g_savedata.playerVehicles) do
-                if not randomChance(g_savedata.settings.POWER_FAILURE_CHANCE, _) then goto continue end
-                if server.getVehicleSimulating(vehicle.id) == false then goto continue end
-                --Check to see if its already failed
-                for _, failure in pairs(g_savedata.powerFailures) do
-                    if failure.vehicleID == vehicle.id then goto continue end
-                end
-                
-                --Fail the vehicle
-                if randomRange(1,2) == 1 then
-                    length = randomRange(3, 14)*time.second
-                else
-                    printDebug("Uh oh! This blackout is going to last awhile...", true, -1)
-                    length = randomRange(20,150)*time.second
-                end
-                printDebug("Failing vehicle with id "..tostring(vehicle.id).." for "..tostring(length).." ticks", true)
-                is_success = failVehiclePower(vehicle.id, length)
+        if g_savedata.settings.POWER_FAILURES and (#g_savedata.playerVehicles > 0) then
+            superDebug("Rolling vehicle ".. tostring(g_savedata.playerVehicles[g_savedata.powerFailureLoopSmoothing].id).. " for power failure")        
+            if randomChance(g_savedata.settings.POWER_FAILURE_CHANCE, g_savedata.tick_counter) then
+                vehicle = g_savedata.playerVehicles[g_savedata.powerFailureLoopSmoothing]
+                if server.getVehicleSimulating(vehicle.id) == true then
+                    --Check to see if its already failed
+                    for _, failure in pairs(g_savedata.powerFailures) do
+                        if failure.vehicleID == vehicle.id then
+                            goto fail
+                            break
+                        end
+                    end
 
-                ::continue::
+                    --Fail the vehicle
+                    if randomChance(60, 532532) then
+                        length = randomRange(3, 14, 9533553)*time.second
+                    else
+                        printDebug("Uh oh! This blackout is going to last awhile...", true, -1)
+                        length = randomRange(20,150, 35271935)*time.second
+                    end
+                    printDebug("Failing vehicle with id "..tostring(vehicle.id).." for "..tostring(length).." ticks ("..tostring(length/time.second).."s)", true)
+                    is_success = failVehiclePower(vehicle.id, length)
+
+                    ::fail::
+                else
+                    printDebug("Vehicle is not simulating, aborting.", true)
+                end
             end
+            g_savedata.powerFailureLoopSmoothing = g_savedata.powerFailureLoopSmoothing + 1
+            if g_savedata.playerVehicles[g_savedata.powerFailureLoopSmoothing] == nil then g_savedata.powerFailureLoopSmoothing = 1 end
         end
 
 
@@ -247,6 +258,7 @@ function tickPowerFailures()
         if failure.expire <= g_savedata.tick_counter then
             printDebug("Recovered vehicle with id "..tostring(failure.vehicleID).." from power failure", true)
             for _, battery in pairs(failure.originalStates) do
+                superDebug("(tickPowerFailures) Recovering battery with name "..tostring(battery.name).. "to ".. tostring(battery.charge).."%")
                 server.setVehicleBattery(failure.vehicleID, battery.pos.x, battery.pos.y, battery.pos.z , battery.charge)
             end
             table.remove(g_savedata.powerFailures, i)
@@ -310,6 +322,10 @@ function onCustomCommand(full_message, peer_id, is_admin, is_auth, prefix, comma
     elseif(command == "debug") then
         g_savedata.debug = not g_savedata.debug
         printDebug("Toggled debug. New value: "..tostring(g_savedata.debug), false, peer_id)
+    elseif(command == "superDebug") then
+        if g_savedata.superDebug == nil then g_savedata.superDebug = false end
+        g_savedata.superDebug = not g_savedata.superDebug
+        printDebug("Toggled super debug. New value: "..tostring(g_savedata.superDebug), false, peer_id)
     elseif(command == "setting") then
         if(g_savedata.settings[arg[1]]==nil)then
             generatedString = ""
@@ -373,18 +389,12 @@ function onCustomCommand(full_message, peer_id, is_admin, is_auth, prefix, comma
         printDebug("Invalid vehicle id! ("..tostring(vehicle)..")", false, peer_id)
     elseif(command == "data") then
         if arg[1] ==  "true" then peer_id = -1 end
-        printDebug("Data: "..stringFromTable(g_savedata), false, peer_id)
-    elseif(command == "sudo") then
-        name = arg[1]
-        message = ""
-        for i = 2, #arg do
-            message = message..arg[i].." "
+        printDebug("Data: "..stringFromTable(g_savedata), false, peer_id)        
+    elseif(command == "random") then
+        amount = arg[1] or 1
+        for i = 1, amount do
+            printDebug("Random number 1-500: "..tostring(randomRange(1,500, i*99)), false, peer_id)
         end
-        if name == nil or message == nil then
-            printDebug("Invalid parameters! Usage: ?storm sudo <name> <message>", false, peer_id)
-            return
-        end
-        server.announce(name, message, -1)
     else
         printDebug("Invalid command! Commands are: start, end, debug, setting\nAdvanced Debug Commands: sample, panic, vehicles, fail", false, peer_id);
     end
@@ -447,6 +457,7 @@ function failVehiclePower(vehicle, length)
         pos = battery.pos
         batteryData, success = server.getVehicleBattery(vehicle, pos.x, pos.y, pos.z)
         if success then 
+            superDebug("(failVehiclePower) Saving battery data for battery with name "..tostring(battery.name))
             table.insert(info.originalStates, batteryData)
             server.setVehicleBattery(vehicle, pos.x, pos.y, pos.z, 0)
         else
@@ -484,7 +495,6 @@ end
 --- @param seed number The seed to use for the random number generator
 function randomChance(percent, seed)
     math.randomseed(server.getTimeMillisec(), seed or 0)
-    printDebug("Seeding random number generator with seed "..tostring(server.getTimeMillisec)..", "..tostring(seed), true)
     number = randomRange(0,99)
     result = number < percent
     if result then printDebug("Random chance passed! "..tostring(number).." is less than "..tostring(percent), false) end
@@ -495,8 +505,9 @@ end
 --- @param min number the min number
 --- @param max number the max number
 --- @return number randomNumber the random number generated
-function randomRange(min, max)
-    return math.random(math.floor(min), math.ceil(max))
+function randomRange(min, max, seed)
+    math.randomseed(server.getTimeMillisec(), seed or g_savedata.tick_counter)
+    return math.random(min, max)
 end
 
 --- Prints a message to the chat
@@ -510,6 +521,12 @@ function printDebug(message, requiresDebug, peer_id)
             message = stringFromTable(message)
         end
         server.announce("The Storm", message, peer_id or -1)
+    end
+end
+
+function superDebug(message)
+    if g_savedata.superDebug == true then
+        printDebug(message, false, -1)
     end
 end
 
