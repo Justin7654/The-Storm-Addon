@@ -19,17 +19,17 @@ g_savedata = {
     cooldown = 0,
     settings = {
         VOLCANOS = property.checkbox("Volcanos More Active During Storm", true),
-        POWER_FAILURES = property.checkbox("Random vehicle power failures", true),
-        DYNAMIC_MUSIC = property.checkbox("Dynamic Music Mood", true), 
+        POWER_FAILURES = property.checkbox("Power Failures (Vehicles can temporarly lose power)", true),
+        DYNAMIC_MUSIC = property.checkbox("Dynamic Music", true), 
         COOLDOWN_TIME = property.slider("Cooldown (minutes)", 5, 60, 1, 30)*time.minute, --The cooldown between storms
-        START_CHANCE = property.slider("Storm Chance Per minute (%)", 0, 100, 5, 10),  --The chance every 60s that a storm can start
+        START_CHANCE = property.slider("Storm Chance per minute (%)", 0, 100, 5, 10),  --The chance every 60s that a storm can start
         MIN_LENGTH = property.slider("Min storm length (minutes)", 5, 60, 5, 5)*time.minute, --Min length a storm can last
         MAX_LENGTH = property.slider("Max storm length (minutes)", 5, 60, 5, 15)*time.minute, -- Max length that a storm can last
         WIND_LENGTH = property.slider("Storm start/stop time (seconds)", 30, 240, 15, 120)*time.second, --Windown/Windup length for storms
         RAIN_AMOUNT = property.slider("Storm Rain Amount (%)", 50, 100, 10, 100)/100, --The peak rain intensity of a storm
         WIND_AMOUNT = property.slider("Storm Wind Amount (%)", 50, 150, 10, 120)/100, --The peak wind intensity of a storm
         FOG_AMOUNT = property.slider("Storm Fog Amount (%)", 50, 100, 10, 80)/100, --The peak fog intensity of a storm
-        POWER_FAILURE_CHANCE = property.slider("Power Failure Chance (% every Second)", 0.1,2, 0.1, 0.3), --The chance that a vehicle will fail during a storm
+        POWER_FAILURE_CHANCE = property.slider("Power failure chance every second (%)", 1,5, 0.1, 1), --The chance that a vehicle will fail during a storm
     },
     storm = {
         ["active"] = false,
@@ -91,7 +91,7 @@ function tickStorm()
                 if(randomRange(0,100)<tonumber(g_savedata.settings.START_CHANCE)) then
                     startStorm()
                 else
-                    --printDebug("Failed random storm spawn, retrying in 1 minute.", true)
+                    printDebug("Failed random storm spawn, retrying in 1 minute.", true)
                 end
             end
 
@@ -173,7 +173,7 @@ function tickStorm()
 
         --Random vehicle power failures
         if g_savedata.settings.POWER_FAILURES and (#g_savedata.playerVehicles > 0) then
-            superDebug("Rolling vehicle ".. tostring(g_savedata.playerVehicles[g_savedata.powerFailureLoopSmoothing].id).. " for power failure")        
+            --superDebug("Rolling vehicle ".. tostring(g_savedata.playerVehicles[g_savedata.powerFailureLoopSmoothing].id).. " for power failure")        
             if randomChance(g_savedata.settings.POWER_FAILURE_CHANCE, g_savedata.tick_counter) then
                 vehicle = g_savedata.playerVehicles[g_savedata.powerFailureLoopSmoothing]
                 if server.getVehicleSimulating(vehicle.id) == true then
@@ -186,11 +186,11 @@ function tickStorm()
                     end
 
                     --Fail the vehicle
-                    if randomChance(70, _) then
-                        length = randomRange(3, 14, 9533553)*time.second
+                    if randomChance(70, 855+g_savedata.powerFailureLoopSmoothing) then
+                        length = randomRange(3, 20)*time.second
                     else
                         printDebug("Uh oh! This blackout is going to last awhile...", true, -1)
-                        length = randomRange(20,150, 35271935)*time.second
+                        length = randomRange(20,150)*time.second    
                     end
                     printDebug("Failing vehicle with id "..tostring(vehicle.id).." for "..tostring(length).." ticks ("..tostring(length/time.second).."s)", true)
                     is_success = failVehiclePower(vehicle.id, length)
@@ -496,7 +496,7 @@ end
 function randomChance(percent, seed)
     number = randomRange(0,99, seed)
     result = number < percent
-    if result then printDebug("Random chance passed! "..tostring(number).." is less than "..tostring(percent), false) end
+    if result then superDebug("Random chance passed! "..tostring(number).." is less than "..tostring(percent)) end
     return result
 end
 
@@ -505,7 +505,7 @@ end
 --- @param max number the max number
 --- @return number randomNumber the random number generated
 function randomRange(min, max, seed)
-    if seed then math.randomseed(server.getTimeMillisec(), seed or g_savedata.tick_counter) end
+    --if seed then math.randomseed(server.getTimeMillisec(), seed or g_savedata.tick_counter) end
     return math.random(min, max)
 end
 
