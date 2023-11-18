@@ -186,7 +186,7 @@ function tickStorm()
                     end
 
                     --Fail the vehicle
-                    if randomChance(60, 532532) then
+                    if randomChance(70, _) then
                         length = randomRange(3, 14, 9533553)*time.second
                     else
                         printDebug("Uh oh! This blackout is going to last awhile...", true, -1)
@@ -393,10 +393,10 @@ function onCustomCommand(full_message, peer_id, is_admin, is_auth, prefix, comma
     elseif(command == "random") then
         amount = arg[1] or 1
         for i = 1, amount do
-            printDebug("Random number 1-500: "..tostring(randomRange(1,500, i*99)), false, peer_id)
+            printDebug("Random number 1-500: "..tostring(randomRange(1,500)), false, peer_id)
         end
     else
-        printDebug("Invalid command! Commands are: start, end, debug, setting\nAdvanced Debug Commands: sample, panic, vehicles, fail", false, peer_id);
+        printDebug("Invalid command! Commands are: start, end, debug, setting\nAdvanced Debug Commands: superDebug, sample, panic, vehicles, fail, data", false, peer_id);
     end
 end
 
@@ -494,8 +494,7 @@ end
 --- @param percent number The percent chance that it will return true
 --- @param seed number The seed to use for the random number generator
 function randomChance(percent, seed)
-    math.randomseed(server.getTimeMillisec(), seed or 0)
-    number = randomRange(0,99)
+    number = randomRange(0,99, seed)
     result = number < percent
     if result then printDebug("Random chance passed! "..tostring(number).." is less than "..tostring(percent), false) end
     return result
@@ -506,7 +505,7 @@ end
 --- @param max number the max number
 --- @return number randomNumber the random number generated
 function randomRange(min, max, seed)
-    math.randomseed(server.getTimeMillisec(), seed or g_savedata.tick_counter)
+    if seed then math.randomseed(server.getTimeMillisec(), seed or g_savedata.tick_counter) end
     return math.random(min, max)
 end
 
