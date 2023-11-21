@@ -1,3 +1,4 @@
+
 ---@diagnostic disable: undefined-doc-param
 -- Author: Justin
 -- GitHub: <GithubLink>
@@ -11,21 +12,23 @@ time = { -- the time unit in ticks, irl time, not in game
 
 g_savedata = {
     tick_counter = 1,
+    powerFailureLoopSmoothing = 1,
     debug = false,
+    superDebug = false,
     cooldown = 0,
     settings = {
-        HELL_MODE = property.checkbox("Hell Mode", false),  --Makes storms completly break the game but looks cool
         VOLCANOS = property.checkbox("Volcanos More Active During Storm", true),
-        POWER_FAILURES = property.checkbox("Random temporary vehicle power failures", true),
+        POWER_FAILURES = property.checkbox("Power Failures (Vehicles can temporarly lose power)", true),
+        DYNAMIC_MUSIC = property.checkbox("Dynamic Music", true), 
         COOLDOWN_TIME = property.slider("Cooldown (minutes)", 5, 60, 1, 30)*time.minute, --The cooldown between storms
-        START_CHANCE = property.slider("Storm Chance Per minute (%)", 0, 100, 5, 10),  --The chance every 60s that a storm can start
+        START_CHANCE = property.slider("Storm Chance per minute (%)", 0, 100, 5, 10),  --The chance every 60s that a storm can start
         MIN_LENGTH = property.slider("Min storm length (minutes)", 5, 60, 5, 5)*time.minute, --Min length a storm can last
         MAX_LENGTH = property.slider("Max storm length (minutes)", 5, 60, 5, 15)*time.minute, -- Max length that a storm can last
         WIND_LENGTH = property.slider("Storm start/stop time (seconds)", 30, 240, 15, 120)*time.second, --Windown/Windup length for storms
         RAIN_AMOUNT = property.slider("Storm Rain Amount (%)", 50, 100, 10, 100)/100, --The peak rain intensity of a storm
         WIND_AMOUNT = property.slider("Storm Wind Amount (%)", 50, 150, 10, 120)/100, --The peak wind intensity of a storm
         FOG_AMOUNT = property.slider("Storm Fog Amount (%)", 50, 100, 10, 80)/100, --The peak fog intensity of a storm
-        POWER_FAILURE_CHANCE = property.slider("Power Failure Chance (% every Second)", 0.5, 10, 0.5, 1), --The chance that a vehicle will fail during a storm
+        POWER_FAILURE_CHANCE = property.slider("Power failure chance every second (%)", 1,5, 0.1, 1), --The chance that a vehicle will fail during a storm
     },
     storm = {
         ["active"] = false,
@@ -47,22 +50,36 @@ g_savedata = {
     },
     playerMoodStates = {
 
-    } 
+    },
+}
+
+settingConversionData = {
+    VOLCANOS = "bool",
+    POWER_FAILURES = "bool",
+    DYNAMIC_MUSIC = "bool",
+    COOLDOWN_TIME = "number",
+    START_CHANCE = "number",
+    MIN_LENGTH = "number",
+    MAX_LENGTH = "number",
+    WIND_LENGTH = "number",
+    RAIN_AMOUNT = "number",
+    WIND_AMOUNT = "number",
+    FOG_AMOUNT = "number",
+    POWER_FAILURE_CHANCE = "number",
 }
 
 
 function onCreate(is_world_create)
     if g_savedata.settings.MIN_LENGTH > g_savedata.settings.MAX_LENGTH then g_savedata.settings.MIN_LENGTH = g_savedata.settings.MAX_LENGTH end
     if g_savedata.settings.VOLCANOS == nil then g_savedata.settings.VOLCANOS = true end
-
-    --Check for events
-    date = server.getDateValue()
 end
 
 function onTick(game_ticks)
+    printDebug("TICK TOCK", false, -1)
     g_savedata.tick_counter = g_savedata.tick_counter + 1
     tickStorm()
     tickPowerFailures()
+    tickMusic()
 end
   
 --- Handles stuff like winding storms, random storms, ending storms, stuff like that
@@ -74,7 +91,7 @@ function tickStorm()
                 if(randomRange(0,100)<tonumber(g_savedata.settings.START_CHANCE)) then
                     startStorm()
                 else
-                    --printDebug("Failed random storm spawn, retrying in 1 minute.", true)
+                    printDebug("Failed random storm spawn, retrying in 1 minute.", true)
                 end
             end
 
@@ -85,7 +102,7 @@ function tickStorm()
 
     --Do stuff with the storm based on stage
     if g_savedata.storm.active == false then return end
-    if not isTickID(0,3) then return end
+    if not isTickID(0,4) then return end
 
     settings = g_savedata.settings
     storm = g_savedata.storm
@@ -145,7 +162,8 @@ function tickStorm()
                     
                     if distanceFrom < 6000 then --No idea what the actual 
                         printDebug("Volcano triggered near "..server.getPlayerName(player.id)..", Watch out!", true, -1)
-                        success = server.spawnVolcano(volcanoPos)
+                        ---@diagnostic disable-next-line: missing-parameter
+                        success = server.spawnVolcano(volcanoPos) --bug in lifeboat API, there is no 2nd parameter for magnitude
                     end
 
                     ::continue::
@@ -154,22 +172,36 @@ function tickStorm()
         end
 
         --Random vehicle power failures
-        if g_savedata.settings.POWER_FAILURES then
-            for _, vehicle in pairs(g_savedata.playerVehicles) do
-                if randomRange(0,100)<tonumber(g_savedata.settings.POWER_FAILURE_CHANCE) then goto continue end
-                if server.getVehicleSimulating(vehicle.id) == false then goto continue end
-                --Check to see if its already failed
-                for _, failure in pairs(g_savedata.powerFailures) do
-                    if failure.vehicleID == vehicle.id then goto continue end
-                end
-                
-                --Fail the vehicle
-                length = randomRange(5,180)*time.second
-                printDebug("Failing vehicle with id "..tostring(vehicle.id).." for "..tostring(length).." ticks", true)
-                is_success = failVehiclePower(vehicle.id, length)
+        if g_savedata.settings.POWER_FAILURES and (#g_savedata.playerVehicles > 0) then
+            --superDebug("Rolling vehicle ".. tostring(g_savedata.playerVehicles[g_savedata.powerFailureLoopSmoothing].id).. " for power failure")        
+            if randomChance(g_savedata.settings.POWER_FAILURE_CHANCE, g_savedata.tick_counter) then
+                vehicle = g_savedata.playerVehicles[g_savedata.powerFailureLoopSmoothing]
+                if server.getVehicleSimulating(vehicle.id) == true then
+                    --Check to see if its already failed
+                    for _, failure in pairs(g_savedata.powerFailures) do
+                        if failure.vehicleID == vehicle.id then
+                            goto fail
+                            break
+                        end
+                    end
 
-                ::continue::
+                    --Fail the vehicle
+                    if randomChance(70, 855+g_savedata.powerFailureLoopSmoothing) then
+                        length = randomRange(3, 20)*time.second
+                    else
+                        printDebug("Uh oh! This blackout is going to last awhile...", true, -1)
+                        length = randomRange(20,150)*time.second    
+                    end
+                    printDebug("Failing vehicle with id "..tostring(vehicle.id).." for "..tostring(length).." ticks ("..tostring(length/time.second).."s)", true)
+                    is_success = failVehiclePower(vehicle.id, length)
+
+                    ::fail::
+                else
+                    printDebug("Vehicle is not simulating, aborting.", true)
+                end
             end
+            g_savedata.powerFailureLoopSmoothing = g_savedata.powerFailureLoopSmoothing + 1
+            if g_savedata.playerVehicles[g_savedata.powerFailureLoopSmoothing] == nil then g_savedata.powerFailureLoopSmoothing = 1 end
         end
 
 
@@ -213,30 +245,43 @@ end
 function tickPowerFailures()
     if not isTickID(0,5) then return end
     for i, failure in pairs(g_savedata.powerFailures) do
+        --Check if the vehicle still exists
+        is_simulating, is_success = server.getVehicleSimulating(failure.vehicleID)
+        if is_success == false then
+            printDebug("Removed vehicle with id "..tostring(failure.vehicleID).." from power table because it no longer exists", true)
+            table.remove(g_savedata.powerFailures, i)
+            goto continue;
+        end
+        if is_simulating == false then goto continue end --Wait for it to simulate again before setting it back to prevent issues
+
+        --Check if its time for it to expire
         if failure.expire <= g_savedata.tick_counter then
             printDebug("Recovered vehicle with id "..tostring(failure.vehicleID).." from power failure", true)
             for _, battery in pairs(failure.originalStates) do
+                superDebug("(tickPowerFailures) Recovering battery with name "..tostring(battery.name).. "to ".. tostring(battery.charge).."%")
                 server.setVehicleBattery(failure.vehicleID, battery.pos.x, battery.pos.y, battery.pos.z , battery.charge)
             end
             table.remove(g_savedata.powerFailures, i)
         end
+        ::continue::
     end
 end
 
 --- Handles music mood, high music mood if not at in a shelter/owned tile during a storm and low mood if in a shelter/owned tile
 function tickMusic()
-    if not isTickID(0,30) or g_savedata.storm.active == false then return end
+    if not isTickID(0,3*time.second) or g_savedata.storm.active == false then return end
+    if g_savedata.settings.DYNAMIC_MUSIC ~= true and g_savedata.settings.DYNAMIC_MUSIC ~= "true" then return end --Both string and bool to support command changing it
     shelterTag = "shelter" --The tag used to mark shelters
     for _, player in pairs(server.getPlayers()) do
         playerPos = server.getPlayerPos(player.id) 
         isOwned = server.getTilePurchased(playerPos)
         isShelter = server.isInZone(playerPos, shelterTag)
         if isOwned or isShelter then
-            if g_savedata.playerMoodStates[player.id] ~= 1 then printDebug(player.name.." audio set to mood_high") end
+            if g_savedata.playerMoodStates[player.id] ~= 1 then printDebug(player.name.." audio set to mood_low", true) end
             server.setAudioMood(player.id, 1)
             g_savedata.playerMoodStates[player.id] = 1
         else
-            if g_savedata.playerMoodStates[player.id] ~= 3 then printDebug(player.name.." audio set to mood_low") end
+            if g_savedata.playerMoodStates[player.id] ~= 3 then printDebug(player.name.." audio set to mood_high", true) end
             server.setAudioMood(player.id, 3)
             g_savedata.playerMoodStates[player.id] = 3
         end
@@ -264,10 +309,9 @@ end
 
 function onCustomCommand(full_message, peer_id, is_admin, is_auth, prefix, command, ...)    
     if prefix ~= "?storm" or not is_admin then return end
-    printDebug("Command Entered: "..full_message..". From peer ".. tostring(peer_id), false, -1)
+    printDebug("Command Entered: "..full_message..". From peer ".. tostring(peer_id), false, 0)
 
     local arg = table.pack(...)
-
     if (command == "start") then
         printDebug("Starting Storm", false,peer_id)
         startStorm()
@@ -277,6 +321,10 @@ function onCustomCommand(full_message, peer_id, is_admin, is_auth, prefix, comma
     elseif(command == "debug") then
         g_savedata.debug = not g_savedata.debug
         printDebug("Toggled debug. New value: "..tostring(g_savedata.debug), false, peer_id)
+    elseif(command == "superDebug") then
+        if g_savedata.superDebug == nil then g_savedata.superDebug = false end
+        g_savedata.superDebug = not g_savedata.superDebug
+        printDebug("Toggled super debug. New value: "..tostring(g_savedata.superDebug), false, peer_id)
     elseif(command == "setting") then
         if(g_savedata.settings[arg[1]]==nil)then
             generatedString = ""
@@ -292,9 +340,26 @@ function onCustomCommand(full_message, peer_id, is_admin, is_auth, prefix, comma
         elseif arg[2] == nil then --Entered a valid setting name but didnt provide a value to set it to, return the settings current value
             printDebug('Current value for setting "'..arg[1]..'": '..g_savedata.settings[arg[1]], false, peer_id)
         else
+            -- Convert the value to the correct type
+            settingType = settingConversionData[arg[1]]
+            if settingType == "bool" then
+                arg[2] = arg[2].lower(arg[2])
+                if arg[2] == "true" or arg[2] == "on" or arg[2] == "1" then
+                    arg[2] = true
+                elseif arg[2] == "false" or arg[2] == "off" or arg[2] == "0" then
+                    arg[2] = false
+                else
+                    printDebug("Invalid value! Setting "..arg[1].." requires a boolean value (true/false)", false, peer_id)
+                    return
+                end
+            else if settingType == "number" then
+                arg[2] = tonumber(arg[2])
+            end
+            --Set the setting
             g_savedata.settings[arg[1]] = arg[2]
             printDebug('Updated setting "'..arg[1]..'" value to "'..arg[2]..'" successfully!', false, peer_id)
         end
+    end
     elseif(command == "sample") then
         sampleWeather(server.getPlayerPos(peer_id))
     elseif(command == "panic") then
@@ -323,20 +388,20 @@ function onCustomCommand(full_message, peer_id, is_admin, is_auth, prefix, comma
         printDebug("Invalid vehicle id! ("..tostring(vehicle)..")", false, peer_id)
     elseif(command == "data") then
         if arg[1] ==  "true" then peer_id = -1 end
-        printDebug("Data: "..stringFromTable(g_savedata), false, peer_id)
-    elseif(command == "sudo") then
-        name = arg[1]
-        message = ""
-        for i = 2, #arg do
-            message = message..arg[i].." "
+        printDebug("Data: "..stringFromTable(g_savedata), false, peer_id)        
+    elseif(command == "random") then
+        amount = arg[1] or 1
+        for i = 1, amount do
+            printDebug("Random number 1-500: "..tostring(randomRange(1,500)), false, peer_id)
         end
-        if name == nil or message == nil then
-            printDebug("Invalid parameters! Usage: ?storm sudo <name> <message>", false, peer_id)
-            return
-        end
-        server.announce(name, message, -1)
+    elseif(command == "validate") then
+        settings = g_savedata.settings
+        if settings.RAIN_AMOUNT == nil then g_savedata.settings.RAIN_AMOUNT = 1 end
+        if settings.WIND_AMOUNT == nil then g_savedata.settings.WIND_AMOUNT = 1 end
+        if settings.FOG_AMOUNT == nil then g_savedata.settings.FOG_AMOUNT = 1 end
+        printDebug("Settings validated by ".. server.getPlayerName(peer_id).."! This should help fix some errors.", false, -1)
     else
-        printDebug("Invalid command! Commands are: start, end, debug, setting\nAdvanced Debug Commands: sample, panic, vehicles, fail", false, peer_id);
+        printDebug("Invalid command! Commands are: start, end, debug, setting\nAdvanced Debug Commands: superDebug, sample, panic, vehicles, fail, data", false, peer_id);
     end
 end
 
@@ -359,6 +424,11 @@ function endStorm()
     storm = g_savedata.storm
     storm.stage = "windDown";
     g_savedata.storm["tweenStart"] = g_savedata.tick_counter
+    ---End all current blackouts
+    for _, failure in pairs(g_savedata.powerFailures) do
+        failure.expire = g_savedata.tick_counter
+    end
+
     setupStartingConditions()
 end
 
@@ -373,7 +443,6 @@ function setupStartingConditions()
 end
 
 --- Fails a vehicles power temporary
---- @param vehicle number The vehicle to fail
 --- @param length number The length in ticks to fail the vehicle for
 function failVehiclePower(vehicle, length)
     length = length or (60*time.second)
@@ -393,6 +462,7 @@ function failVehiclePower(vehicle, length)
         pos = battery.pos
         batteryData, success = server.getVehicleBattery(vehicle, pos.x, pos.y, pos.z)
         if success then 
+            superDebug("(failVehiclePower) Saving battery data for battery with name "..tostring(battery.name))
             table.insert(info.originalStates, batteryData)
             server.setVehicleBattery(vehicle, pos.x, pos.y, pos.z, 0)
         else
@@ -426,13 +496,22 @@ function tween(startVal, targetVal, position, length)
     return startVal + (targetVal - startVal) * interpolationFactor;
 end
 
+--- @param percent number The percent chance that it will return true
+--- @param seed number The seed to use for the random number generator
+function randomChance(percent, seed)
+    number = randomRange(0,99, seed)
+    result = number < percent
+    if result then superDebug("Random chance passed! "..tostring(number).." is less than "..tostring(percent)) end
+    return result
+end
+
 --- Generates a random number between the given ranges
 --- @param min number the min number
 --- @param max number the max number
 --- @return number randomNumber the random number generated
-function randomRange(min, max)
-    math.randomseed(server.getTimeMillisec())
-    return math.random(math.floor(min), math.ceil(max))
+function randomRange(min, max, seed)
+    --if seed then math.randomseed(server.getTimeMillisec(), seed or g_savedata.tick_counter) end
+    return math.random(min, max)
 end
 
 --- Prints a message to the chat
@@ -442,8 +521,16 @@ end
 function printDebug(message, requiresDebug, peer_id)
     if requiresDebug == nil then requiresDebug = true end
     if((requiresDebug and g_savedata.debug) or requiresDebug == false) then
-        if type(message) == "table" then message = stringFromTable(message) end
+        if type(message) == "table" then
+            message = stringFromTable(message)
+        end
         server.announce("The Storm", message, peer_id or -1)
+    end
+end
+
+function superDebug(message)
+    if g_savedata.superDebug == true then
+        printDebug(message, false, -1)
     end
 end
 

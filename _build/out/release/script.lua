@@ -102,13 +102,19 @@ function tickStorm()
 
     --Do stuff with the storm based on stage
     if g_savedata.storm.active == false then return end
-    if not isTickID(0,4) then return end
+    if not isTickID(0,2) then return end
 
     settings = g_savedata.settings
     storm = g_savedata.storm
     stage = storm.stage
 
-    if isTickID(0,60) then server.setGameSetting("override_weather", true) end
+    if isTickID(0,60) then
+        state =  server.getGameSettings().override_weather
+        if state == false then
+            printDebug("Overide weather is required for the addon to function! To end the storm, type ?storm end in chat", false, -1)
+            server.setGameSetting("override_weather", true)
+        end
+    end
 
     if (stage == "windUp") then
         startValue = storm.windStart; --The start value
@@ -395,6 +401,24 @@ function onCustomCommand(full_message, peer_id, is_admin, is_auth, prefix, comma
         for i = 1, amount do
             printDebug("Random number 1-500: "..tostring(randomRange(1,500)), false, peer_id)
         end
+    elseif(command == "validate") then
+        for setting in pairs(g_savedata.settings) do
+            printDebug("Validating... "..tostring(setting), false, peer_id)
+            if g_savedata.settings[setting] == nil then
+                print("Found issue with setting "..tostring(setting).."! Fixing...", false, peer_id)
+                --Replace with its appropriate type
+                correctType = settingConversionData[setting]
+                if(correctType == "bool") then
+                    printDebug("Defaulting to true", false, peer_id)
+                    g_savedata.settings[setting] = true
+                elseif(correctType == "number") then
+                    printDebug("Defaulting to 0", false, peer_id)
+                    g_savedata.settings[setting] = 0
+                else
+                    printDebug("Failed to fix! Invalid type!", false, peer_id)
+                end
+            end
+        end
     else
         printDebug("Invalid command! Commands are: start, end, debug, setting\nAdvanced Debug Commands: superDebug, sample, panic, vehicles, fail, data", false, peer_id);
     end
@@ -408,6 +432,7 @@ function startStorm()
     g_savedata.storm.stage = "windUp"
     g_savedata.storm["tweenStart"] = g_savedata.tick_counter
     server.setAudioMood(-1, 3) --Sets to high, naturally decreases over time (According to game)
+    server.setGameSetting("override_weather", true)
     setupStartingConditions()
 end
 
