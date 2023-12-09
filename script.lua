@@ -130,6 +130,18 @@ enum = {
             FUEL_SELL = 14,
         },
     },
+    FLUID_TYPE = {
+        FRESH_WATER = 0,
+        DIESEL = 1,
+        JET_FUEL = 2,
+        AIR = 3,
+        EXHAUST = 4,
+        OIL = 5,
+        SEA_WATER = 6,
+        STEAM = 7,
+        SLURRY = 8,
+        SATURATED_SLURRY = 9,
+    }, 
 }
 
 function onCreate(is_world_create)
@@ -310,6 +322,7 @@ function tickStorm()
     end
 end
 
+--- Handles ending power failures and returning vehicles to their original state
 function tickPowerFailures()
     if not isTickID(0,5) then return end
     for i, failure in pairs(g_savedata.powerFailures) do
@@ -354,6 +367,12 @@ function tickMusic()
             g_savedata.playerMoodStates[player.id] = 3
         end
     end   
+
+end
+
+--- Active during the halloween event, and rarely during normal gameplay outside of it
+function tickHorror()
+    if server.getSeasonalEvent() ~= enum.SEASONAL_EVENTS.HALLOWEEN and not g_savedata.settings.BYPASS_SEASONAL_EVENTS then return end
 
 end
 
@@ -490,9 +509,9 @@ end
 function startStorm()
     printDebug("(startStorm) called", true)
     season = server.getSeasonalEvent()
-    if season == enum.SEASONAL_EVENTS.CHRISTMAS then
+    if season == enum.SEASONAL_EVENTS.CHRISTMAS and false then
         server.notify(-1, "Broadcast", "A blizzard is on the horizon.", 4)
-    elseif season == enum.SEASONAL_EVENTS.HALLOWEEN then
+    elseif season == enum.SEASONAL_EVENTS.HALLOWEEN or true then
         server.notify(-1, "Broadcast", "Something is forming on the horizon...", 4)
     else
         server.notify(-1, "Broadcast", "A storm is on the horizon.", 4)

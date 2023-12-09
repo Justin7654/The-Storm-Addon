@@ -22,7 +22,7 @@ g_savedata = {
         POWER_FAILURES = property.checkbox("Power Failures (Vehicles can temporarly lose power)", true),
         DYNAMIC_MUSIC = property.checkbox("Dynamic Music", true), 
         COOLDOWN_TIME = property.slider("Cooldown (minutes)", 5, 60, 1, 30)*time.minute, --The cooldown between storms
-        START_CHANCE = property.slider("Storm Chance per minute (%)", 0, 100, 1, 1),  --The chance every 60s that a storm can start
+        START_CHANCE = property.slider("Storm Chance per minute (%)", 0, 100, 5, 5),  --The chance every 60s that a storm can start
         MIN_LENGTH = property.slider("Min storm length (minutes)", 5, 60, 5, 5)*time.minute, --Min length a storm can last
         MAX_LENGTH = property.slider("Max storm length (minutes)", 5, 60, 5, 15)*time.minute, -- Max length that a storm can last
         WIND_LENGTH = property.slider("Storm start/stop time (seconds)", 30, 240, 15, 120)*time.second, --Windown/Windup length for storms
@@ -30,6 +30,7 @@ g_savedata = {
         WIND_AMOUNT = property.slider("Storm Wind Amount (%)", 50, 150, 10, 120)/100, --The peak wind intensity of a storm
         FOG_AMOUNT = property.slider("Storm Fog Amount (%)", 50, 100, 10, 80)/100, --The peak fog intensity of a storm
         POWER_FAILURE_CHANCE = property.slider("Power failure chance every second (%)", 1,5, 0.1, 1), --The chance that a vehicle will fail during a storm
+        BYPASS_SEASONAL_EVENTS = false,
     },
     storm = {
         ["active"] = false,
@@ -43,15 +44,9 @@ g_savedata = {
             fog = nil,
         },
     },
-    powerFailures = {
-        
-    },
-    playerVehicles = {
-
-    },
-    playerMoodStates = {
-
-    },
+    powerFailures = {},
+    playerVehicles = {},
+    playerMoodStates = {},
 }
 
 settingConversionData = {
@@ -67,8 +62,88 @@ settingConversionData = {
     WIND_AMOUNT = "number",
     FOG_AMOUNT = "number",
     POWER_FAILURE_CHANCE = "number",
+    BYPASS_SEASONAL_EVENTS = "bool",
 }
 
+enum = {
+    SEASONAL_EVENTS = {
+        NONE = 0,
+        HALLOWEEN = 1,
+        CHRISTMAS = 2,
+    },
+    NOTIFICATION_TYPES = {
+        NEW_MISSION = 0,
+        NEW_MISSION_CRITICAL = 1,
+        FAILED_MISSION = 2,
+        FAILED_MISSION_CRITICAL = 3,
+        COMPLETE_MISSION = 4,
+        NETWORK_CONNECT = 5,
+        NETWORK_DISCONNECT = 6,
+        NETWORK_INFO = 7,
+        CHAT_MESSAGE = 8,
+        NETWORK_INFO_CRITICAL = 9,
+    },
+    MAP_OBJECT = {
+        POSITION_TYPES = {
+            FIXED = 0,
+            VEHICLE = 1,
+            OBJECT = 2,
+        },
+        MARKER_TYPES = {
+            DELIVERY_TARGET = 0,
+            SURVIVOR = 1,
+            OBJECT = 2,
+            WAYPOINT = 3,
+            TUTORIAL = 4,
+            FIRE = 5,
+            SHARK = 6,
+            ICE = 7,
+            SEARCH_RADIUS = 8,
+            FLAG_1 = 9,
+            FLAG_2 = 10,
+            HOUSE = 11,
+            CAR = 12,
+            PLANE = 13,
+            TANK = 14,
+            HELI = 15,
+            SHIP = 16,
+            BOAT = 17,
+            ATTACK = 18,
+            DEFEND = 19,
+        },
+    },
+    MAP_LABEL = {
+        LABEL_TYPES = {
+            NONE = 0,
+            CROSS = 1,
+            WRECKAGE = 2,
+            TERMINAL = 3,
+            MILITARY = 4,
+            HERITAGE = 5,
+            RIG = 6,
+            INDUSTRIAL = 7,
+            HOSPITAL = 8,
+            SCIENCE = 9,
+            AIRPORT = 10,
+            COASTGUARD = 11,
+            LIGHTHOUSE = 12,
+            FUEL = 13,
+            FUEL_SELL = 14,
+        },
+    },
+    FLUID_TYPE = {
+        FRESH_WATER = 0,
+        DIESEL = 1,
+        JET_FUEL = 2,
+        AIR = 3,
+        EXHAUST = 4,
+        OIL = 5,
+        SEA_WATER = 6,
+        STEAM = 7,
+        SLURRY = 8,
+        SATURATED_SLURRY = 9,
+    }, 
+}
 
 function onCreate(is_world_create)
     if g_savedata.settings.MIN_LENGTH > g_savedata.settings.MAX_LENGTH then g_savedata.settings.MIN_LENGTH = g_savedata.settings.MAX_LENGTH end
@@ -248,6 +323,7 @@ function tickStorm()
     end
 end
 
+--- Handles ending power failures and returning vehicles to their original state
 function tickPowerFailures()
     if not isTickID(0,5) then return end
     for i, failure in pairs(g_savedata.powerFailures) do
@@ -292,6 +368,12 @@ function tickMusic()
             g_savedata.playerMoodStates[player.id] = 3
         end
     end   
+
+end
+
+--- Active during the halloween event, and rarely during normal gameplay outside of it
+function tickHorror()
+    if server.getSeasonalEvent() ~= enum.SEASONAL_EVENTS.HALLOWEEN and not g_savedata.settings.BYPASS_SEASONAL_EVENTS then return end
 
 end
 
@@ -427,7 +509,14 @@ end
 --- Starts the storm
 function startStorm()
     printDebug("(startStorm) called", true)
-    server.notify(-1, "Broadcast", "A storm is on the horizon.", 4)
+    season = server.getSeasonalEvent()
+    if season == enum.SEASONAL_EVENTS.CHRISTMAS and false then
+        server.notify(-1, "Broadcast", "A blizzard is on the horizon.", 4)
+    elseif season == enum.SEASONAL_EVENTS.HALLOWEEN or true then
+        server.notify(-1, "Broadcast", "Something is forming on the horizon...", 4)
+    else
+        server.notify(-1, "Broadcast", "A storm is on the horizon.", 4)
+    end
     g_savedata.storm.active = true
     g_savedata.storm.stage = "windUp"
     g_savedata.storm["tweenStart"] = g_savedata.tick_counter
@@ -440,7 +529,14 @@ end
 function endStorm()
     printDebug("(endStorm) called", true)
     if storm.active == false then return end
-    server.notify(-1, "Broadcast", "The storm seems to be clearing.", 4)
+    season = server.getSeasonalEvent()
+    if season == enum.SEASONAL_EVENTS.EVENTS.CHRISTMAS then
+        server.notify(-1, "Broadcast", "The blizzard seems to be clearing.", 4)
+    elseif season == enum.SEASONAL_EVENTS.HALLOWEEN then
+        server.notify(-1, "Broadcast", "The storm seems to be clearing.", 4)
+    else
+        server.notify(-1, "Broadcast", "It seems to be clearing up...", 4)
+    end
     storm = g_savedata.storm
     storm.stage = "windDown";
     g_savedata.storm["tweenStart"] = g_savedata.tick_counter
