@@ -4,7 +4,14 @@
 -- Author: Justin
 -- GitHub: <GithubLink>
 -- Workshop: <WorkshopLink>
-time = { -- the time unit in ticks, irl time, not in game
+
+--Classes
+---@class WorldEvent
+---@field missionLocation string The name of the mission location in the addon editor
+---@field mapLabelType integer The type of map label to use
+---@field chance integer The chance that this event will occur every 10 seconds
+
+time = {
 	second = 60,
 	minute = 3600,
 	hour = 216000,
@@ -20,7 +27,7 @@ g_savedata = {
     settings = {
         VOLCANOS = property.checkbox("Volcanos More Active During Storm", true),
         POWER_FAILURES = property.checkbox("Power Failures (Vehicles can temporarly lose power)", true),
-        DYNAMIC_MUSIC = property.checkbox("Dynamic Music", true), 
+        DYNAMIC_MUSIC = property.checkbox("Dynamic Music", true),
         COOLDOWN_TIME = property.slider("Cooldown (minutes)", 5, 60, 1, 30)*time.minute, --The cooldown between storms
         START_CHANCE = property.slider("Storm Chance per minute (%)", 0, 100, 5, 5),  --The chance every 60s that a storm can start
         MIN_LENGTH = property.slider("Min storm length (minutes)", 5, 60, 5, 5)*time.minute, --Min length a storm can last
@@ -30,7 +37,7 @@ g_savedata = {
         WIND_AMOUNT = property.slider("Storm Wind Amount (%)", 50, 150, 10, 120)/100, --The peak wind intensity of a storm
         FOG_AMOUNT = property.slider("Storm Fog Amount (%)", 50, 100, 10, 80)/100, --The peak fog intensity of a storm
         POWER_FAILURE_CHANCE = property.slider("Power failure chance every second (%)", 1,5, 0.1, 1), --The chance that a vehicle will fail during a storm
-        BYPASS_SEASONAL_EVENTS = false,
+        BYPASS_SEASONAL_EVENTS = false, ---Changable in settings, for debugging purposes
     },
     storm = {
         ["active"] = false,
@@ -43,6 +50,14 @@ g_savedata = {
             wind = nil,
             fog = nil,
         },
+    },
+    worldEvents = {
+        {
+            missionLocation = nil,
+            mapLabelType = nil,
+            chance = 1,
+        },
+        
     },
     powerFailures = {},
     playerVehicles = {},
@@ -65,7 +80,7 @@ settingConversionData = {
     BYPASS_SEASONAL_EVENTS = "bool",
 }
 
-enum = {
+enum = {    
     SEASONAL_EVENTS = {
         NONE = 0,
         HALLOWEEN = 1,
@@ -142,7 +157,7 @@ enum = {
         STEAM = 7,
         SLURRY = 8,
         SATURATED_SLURRY = 9,
-    }, 
+    },
 }
 
 function onCreate(is_world_create)
@@ -155,6 +170,8 @@ function onTick(game_ticks)
     tickStorm()
     tickPowerFailures()
     tickMusic()
+    tickEvent()
+    tickHorror()
 end
   
 --- Handles stuff like winding storms, random storms, ending storms, stuff like that
@@ -216,6 +233,9 @@ function tickStorm()
             storm.stage = "full"
             storm["endTime"] = g_savedata.tick_counter + randomRange(settings.MIN_LENGTH, settings.MAX_LENGTH)
             printDebug("Complete wind up. Storm will end at tick "..tostring(storm["endTime"]),true)
+            if isEvent(enum.SEASONAL_EVENTS.HALLOWEEN) then
+                server.notify(-1, "Broadcast", "Something feels off about this once...", enum.NOTIFICATION_TYPES.CHAT_MESSAGE)
+            end
         end
     elseif (stage == "full") then
         --Set weather back every 15 ticks to avoid tampering
@@ -351,7 +371,7 @@ end
 
 --- Handles music mood, high music mood if not at in a shelter/owned tile during a storm and low mood if in a shelter/owned tile
 function tickMusic()
-    if not isTickID(0,3*time.second) or g_savedata.storm.active == false then return end
+    if not isTickID(2,3*time.second) or g_savedata.storm.active == false then return end
     if g_savedata.settings.DYNAMIC_MUSIC ~= true and g_savedata.settings.DYNAMIC_MUSIC ~= "true" then return end --Both string and bool to support command changing it
     shelterTag = "shelter" --The tag used to mark shelters
     for _, player in pairs(server.getPlayers()) do
@@ -373,7 +393,15 @@ end
 
 --- Active during the halloween event, and rarely during normal gameplay outside of it
 function tickHorror()
+    if not isTickID(1, 5*time.second) then return end
     if server.getSeasonalEvent() ~= enum.SEASONAL_EVENTS.HALLOWEEN and not g_savedata.settings.BYPASS_SEASONAL_EVENTS then return end
+    --TODO: Think of stuff to do here
+    --Power
+end
+
+function tickEvent()
+    if not isTickID(4, 10*time.second) then return end
+    --Large meteor shower   
 
 end
 
@@ -530,7 +558,7 @@ function endStorm()
     printDebug("(endStorm) called", true)
     if storm.active == false then return end
     season = server.getSeasonalEvent()
-    if season == enum.SEASONAL_EVENTS.EVENTS.CHRISTMAS then
+    if season == enum.SEASONAL_EVENTS.CHRISTMAS then
         server.notify(-1, "Broadcast", "The blizzard seems to be clearing.", 4)
     elseif season == enum.SEASONAL_EVENTS.HALLOWEEN then
         server.notify(-1, "Broadcast", "The storm seems to be clearing.", 4)
@@ -648,6 +676,12 @@ function superDebug(message)
     if g_savedata.superDebug == true then
         printDebug(message, false, -1)
     end
+end
+
+--- @param event integer the event you want to check
+--- @return boolean isEvent if the event is the current event
+function isEvent(event)
+    return (server.getSeasonalEvent() == event) or g_savedata.settings.BYPASS_SEASONAL_EVENTS
 end
 
 --- Credit: Toastery (USE: Timing, Optimization)
