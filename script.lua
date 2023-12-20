@@ -4,11 +4,12 @@
 -- GitHub: <GithubLink>
 -- Workshop: <WorkshopLink>
 
---Classes
 ---@class WorldEvent
 ---@field missionLocation string The name of the mission location in the addon editor
----@field mapLabelType integer The type of map label to use
----@field chance integer The chance that this event will occur every 10 seconds
+---@field mapLabelLocation string The name of the zone of whitch to place the map label in the mission location. If nil, it will be placed in the center of the mission location
+---@field mapLabelType integer The type of map label to use. See enum.MAP_LABEL.LABEL_TYPES
+---@field limit integer The maximum amount of this event at a single time. If nil, it will be unlimited
+---@field weight integer The weight of the event. The higher the weight, the more likely it is to be chosen
 
 time = {
 	second = 60,
@@ -52,9 +53,18 @@ g_savedata = {
     },
     worldEvents = {
         {
-            missionLocation = nil,
-            mapLabelType = nil,
-            chance = 1,
+            missionLocation = "Temp",
+            mapLebelLocation = "Tmp",
+            mapLabelType = enum.MAP_LABEL.LABEL_TYPES.CROSS,
+            limit = 1,
+            weight = 1,
+        },
+        {
+            missionLocation = "LIGHTHOUSE_OB_BLOCKAGE",
+            mapLebelLocation = "Tmp",
+            mapLabelType = enum.MAP_LABEL.LABEL_TYPES.CROSS,
+            limit = 1,
+            weight = 1,
         },
         
     },
@@ -62,7 +72,7 @@ g_savedata = {
     playerVehicles = {},
     playerMoodStates = {},
 }
-
+b = g_savedata.worldEvents[1]
 settingConversionData = {
     VOLCANOS = "bool",
     POWER_FAILURES = "bool",
@@ -379,12 +389,12 @@ function tickMusic()
         isShelter = server.isInZone(playerPos, shelterTag)
         if isOwned or isShelter then
             if g_savedata.playerMoodStates[player.id] ~= 1 then printDebug(player.name.." audio set to mood_low", true) end
-            server.setAudioMood(player.id, 1)
+            server.setAudioMood(player.id, 2)
             g_savedata.playerMoodStates[player.id] = 1
         else
             if g_savedata.playerMoodStates[player.id] ~= 3 then printDebug(player.name.." audio set to mood_high", true) end
-            server.setAudioMood(player.id, 3)
-            g_savedata.playerMoodStates[player.id] = 3
+            server.setAudioMood(player.id, 4)
+            g_savedata.playerMoodStates[player.id] = 4
         end
     end   
 
@@ -690,6 +700,9 @@ end
 function isTickID(id, rate)
     return (g_savedata.tick_counter + id) % rate == 0
 end
+
+
+
 
 --- Credit: Toastery (USE: Distance checking)
 ---@param x1 number x coordinate of position 1
