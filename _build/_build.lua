@@ -34,12 +34,22 @@ end
 
 local _builder = LifeBoatAPI.Tools.Builder:new(rootDirs, outputDir, luaDocsMCPath, luaDocsAddonPath)
 
-if onLBBuildStarted then onLBBuildStarted(_builder, params, LifeBoatAPI.Tools.Filepath:new([[c:\Users\justi\OneDrive\Documents\VsCode\TheStorm]])) end
+if onLBBuildStarted then onLBBuildStarted(_builder, params, LifeBoatAPI.Tools.Filepath:new([[e:\Documents\Visual Studio\The Storm Addon]])) end
 
-if onLBBuildFileStarted then onLBBuildFileStarted(_builder, params, LifeBoatAPI.Tools.Filepath:new([[c:\Users\justi\OneDrive\Documents\VsCode\TheStorm]]), [[script.lua]], LifeBoatAPI.Tools.Filepath:new([[c:\Users\justi\OneDrive\Documents\VsCode\TheStorm\script.lua]])) end
+if onLBBuildFileStarted then onLBBuildFileStarted(_builder, params, LifeBoatAPI.Tools.Filepath:new([[e:\Documents\Visual Studio\The Storm Addon]]), [[script.lua]], LifeBoatAPI.Tools.Filepath:new([[e:\Documents\Visual Studio\The Storm Addon\script.lua]])) end
 
-local combinedText, outText, outFile = _builder:buildAddonScript([[script.lua]], LifeBoatAPI.Tools.Filepath:new([[c:\Users\justi\OneDrive\Documents\VsCode\TheStorm\script.lua]]), params)
-if onLBBuildFileComplete then onLBBuildFileComplete(LifeBoatAPI.Tools.Filepath:new([[c:\Users\justi\OneDrive\Documents\VsCode\TheStorm]]), [[script.lua]], LifeBoatAPI.Tools.Filepath:new([[c:\Users\justi\OneDrive\Documents\VsCode\TheStorm\script.lua]]), outFile, combinedText, outText) end
+local combinedText, outText, outFile = _builder:buildAddonScript([[script.lua]], LifeBoatAPI.Tools.Filepath:new([[e:\Documents\Visual Studio\The Storm Addon\script.lua]]), params)
+if onLBBuildFileComplete then onLBBuildFileComplete(LifeBoatAPI.Tools.Filepath:new([[e:\Documents\Visual Studio\The Storm Addon]]), [[script.lua]], LifeBoatAPI.Tools.Filepath:new([[e:\Documents\Visual Studio\The Storm Addon\script.lua]]), outFile, combinedText, outText) end
 
-if onLBBuildComplete then onLBBuildComplete(_builder, params, LifeBoatAPI.Tools.Filepath:new([[c:\Users\justi\OneDrive\Documents\VsCode\TheStorm]])) end
+if onLBBuildFileStarted then onLBBuildFileStarted(_builder, params, LifeBoatAPI.Tools.Filepath:new([[e:\Documents\Visual Studio\The Storm Addon]]), [[libs\enum.lua]], LifeBoatAPI.Tools.Filepath:new([[e:\Documents\Visual Studio\The Storm Addon\libs\enum.lua]])) end
+
+local combinedText, outText, outFile = _builder:buildAddonScript([[libs\enum.lua]], LifeBoatAPI.Tools.Filepath:new([[e:\Documents\Visual Studio\The Storm Addon\libs\enum.lua]]), params)
+if onLBBuildFileComplete then onLBBuildFileComplete(LifeBoatAPI.Tools.Filepath:new([[e:\Documents\Visual Studio\The Storm Addon]]), [[libs\enum.lua]], LifeBoatAPI.Tools.Filepath:new([[e:\Documents\Visual Studio\The Storm Addon\libs\enum.lua]]), outFile, combinedText, outText) end
+
+if onLBBuildFileStarted then onLBBuildFileStarted(_builder, params, LifeBoatAPI.Tools.Filepath:new([[e:\Documents\Visual Studio\The Storm Addon]]), [[libs\event.lua]], LifeBoatAPI.Tools.Filepath:new([[e:\Documents\Visual Studio\The Storm Addon\libs\event.lua]])) end
+
+local combinedText, outText, outFile = _builder:buildAddonScript([[libs\event.lua]], LifeBoatAPI.Tools.Filepath:new([[e:\Documents\Visual Studio\The Storm Addon\libs\event.lua]]), params)
+if onLBBuildFileComplete then onLBBuildFileComplete(LifeBoatAPI.Tools.Filepath:new([[e:\Documents\Visual Studio\The Storm Addon]]), [[libs\event.lua]], LifeBoatAPI.Tools.Filepath:new([[e:\Documents\Visual Studio\The Storm Addon\libs\event.lua]]), outFile, combinedText, outText) end
+
+if onLBBuildComplete then onLBBuildComplete(_builder, params, LifeBoatAPI.Tools.Filepath:new([[e:\Documents\Visual Studio\The Storm Addon]])) end
 --- @diagnostic enable: undefined-global

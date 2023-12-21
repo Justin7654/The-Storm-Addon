@@ -5,11 +5,146 @@
 -- GitHub: <GithubLink>
 -- Workshop: <WorkshopLink>
 
---Classes
+--Libraries
+-- Author: Justin Olsen
+-- GitHub: https://github.com/Justin7654/sw_the_storm
+-- Workshop: <WorkshopLink>
+--
+--- Developed using LifeBoatAPI - Stormworks Lua plugin for VSCode - https://code.visualstudio.com/download (search "Stormworks Lua with LifeboatAPI" extension)
+--- If you have any issues, please report them here: https://github.com/nameouschangey/STORMWORKS_VSCodeExtension/issues - by Nameous Changey
+
+enum = {    
+    SEASONAL_EVENTS = {
+        NONE = 0,
+        HALLOWEEN = 1,
+        CHRISTMAS = 2,
+    },
+    NOTIFICATION_TYPES = {
+        NEW_MISSION = 0,
+        NEW_MISSION_CRITICAL = 1,
+        FAILED_MISSION = 2,
+        FAILED_MISSION_CRITICAL = 3,
+        COMPLETE_MISSION = 4,
+        NETWORK_CONNECT = 5,
+        NETWORK_DISCONNECT = 6,
+        NETWORK_INFO = 7,
+        CHAT_MESSAGE = 8,
+        NETWORK_INFO_CRITICAL = 9,
+    },
+    MAP_OBJECT = {
+        POSITION_TYPES = {
+            FIXED = 0,
+            VEHICLE = 1,
+            OBJECT = 2,
+        },
+        MARKER_TYPES = {
+            DELIVERY_TARGET = 0,
+            SURVIVOR = 1,
+            OBJECT = 2,
+            WAYPOINT = 3,
+            TUTORIAL = 4,
+            FIRE = 5,
+            SHARK = 6,
+            ICE = 7,
+            SEARCH_RADIUS = 8,
+            FLAG_1 = 9,
+            FLAG_2 = 10,
+            HOUSE = 11,
+            CAR = 12,
+            PLANE = 13,
+            TANK = 14,
+            HELI = 15,
+            SHIP = 16,
+            BOAT = 17,
+            ATTACK = 18,
+            DEFEND = 19,
+        },
+    },
+    MAP_LABEL = {
+        LABEL_TYPES = {
+            NONE = 0,
+            CROSS = 1,
+            WRECKAGE = 2,
+            TERMINAL = 3,
+            MILITARY = 4,
+            HERITAGE = 5,
+            RIG = 6,
+            INDUSTRIAL = 7,
+            HOSPITAL = 8,
+            SCIENCE = 9,
+            AIRPORT = 10,
+            COASTGUARD = 11,
+            LIGHTHOUSE = 12,
+            FUEL = 13,
+            FUEL_SELL = 14,
+        },
+    },
+    FLUID_TYPE = {
+        FRESH_WATER = 0,
+        DIESEL = 1,
+        JET_FUEL = 2,
+        AIR = 3,
+        EXHAUST = 4,
+        OIL = 5,
+        SEA_WATER = 6,
+        STEAM = 7,
+        SLURRY = 8,
+        SATURATED_SLURRY = 9,
+    },
+}
+-- Author: Justin Olsen
+-- GitHub: https://github.com/Justin7654/sw_the_storm
+-- Workshop: <WorkshopLink>
+--
+--- Developed using LifeBoatAPI - Stormworks Lua plugin for VSCode - https://code.visualstudio.com/download (search "Stormworks Lua with LifeboatAPI" extension)
+--- If you have any issues, please report them here: https://github.com/nameouschangey/STORMWORKS_VSCodeExtension/issues - by Nameous Changey
+
+
+event = {}
+
+---Loads a given event
+---@param event WorldEvent The event to load
+function event.startEvent(event)
+    if event == nil then
+        printDebug("(event.startEvent) event is nil!")
+        return false
+    end
+    ---
+end
+
+---Ends a given event
+function event.endEvent(event)
+    
+end
+
+---Returns a random weighted event that is currently available
+--- @param seed nil The seed to use for the random number generator. If nil, the current seed will be used
+function event.getRandomEvent(seed)
+    if seed then math.randomseed(seed, server.getTimeMillisec()) end
+    options = g_savedata.worldEvents
+    totalWeight = 0
+    for i, event in ipairs(options) do
+        totalWeight = totalWeight + event.weight
+    end
+    random = math.random(0, totalWeight)
+    for i, event in ipairs(options) do
+        random = random - event.weight
+        if random <= 0 then
+            return event
+        end
+    end
+    printDebug("(event.getRandomEvent) WARNING: FAILED TO GET RANDOM EVENT!\nSeed: "..seed.."\nTotal Weight: "..totalWeight.."\nRandom: "..random.."\nOptions: "..#options, true, -1)
+    return nil
+end
+
+
 ---@class WorldEvent
 ---@field missionLocation string The name of the mission location in the addon editor
----@field mapLabelType integer The type of map label to use
----@field chance integer The chance that this event will occur every 10 seconds
+---@field mapLabelTracked string The tag of the vehicle to place the map label. If nil, it will be placed in the center of the mission location
+---@field mapLabelType integer The type of map label to use. See enum.MAP_LABEL.LABEL_TYPES
+---@field limit integer The maximum amount of this event at a single time. If nil, it will be unlimited
+---@field weight integer The weight of the event. The higher the weight, the more likely it is to be chosen
+---@field currentSpawned integer The amount of this event currently spawned. If nil, create a value and assign to 0
 
 time = {
 	second = 60,
@@ -53,11 +188,13 @@ g_savedata = {
     },
     worldEvents = {
         {
-            missionLocation = nil,
-            mapLabelType = nil,
-            chance = 1,
+            missionLocation = "LIGHTHOUSE_OB_BLOCKAGE",
+            mapLebelLocation = "Tmp",
+            mapLabelType = enum.MAP_LABEL.LABEL_TYPES.CROSS,
+            limit = 1,
+            weight = 1,
+            currentSpawned = 0,
         },
-        
     },
     powerFailures = {},
     playerVehicles = {},
@@ -380,12 +517,12 @@ function tickMusic()
         isShelter = server.isInZone(playerPos, shelterTag)
         if isOwned or isShelter then
             if g_savedata.playerMoodStates[player.id] ~= 1 then printDebug(player.name.." audio set to mood_low", true) end
-            server.setAudioMood(player.id, 1)
+            server.setAudioMood(player.id, 2)
             g_savedata.playerMoodStates[player.id] = 1
         else
             if g_savedata.playerMoodStates[player.id] ~= 3 then printDebug(player.name.." audio set to mood_high", true) end
-            server.setAudioMood(player.id, 3)
-            g_savedata.playerMoodStates[player.id] = 3
+            server.setAudioMood(player.id, 4)
+            g_savedata.playerMoodStates[player.id] = 4
         end
     end   
 
@@ -425,7 +562,7 @@ end
 
 function onCustomCommand(full_message, peer_id, is_admin, is_auth, prefix, command, ...)    
     if prefix ~= "?storm" or not is_admin then return end
-    printDebug("Command Entered: "..full_message..". From peer ".. tostring(peer_id), false, 0)
+    if peer_id ~= 0 then printDebug("Command Entered: "..full_message..". From peer ".. tostring(peer_id), false, 0) end
 
     local arg = table.pack(...)
 
@@ -478,7 +615,10 @@ function onCustomCommand(full_message, peer_id, is_admin, is_auth, prefix, comma
         end
     end
     elseif(command == "sample") then
+        old = g_savedata.debug
+        g_savedata.debug = true
         sampleWeather(server.getPlayerPos(peer_id))
+        g_savedata.debug = old
     elseif(command == "panic") then
         storm = g_savedata.storm
         storm.active = false
@@ -529,6 +669,10 @@ function onCustomCommand(full_message, peer_id, is_admin, is_auth, prefix, comma
                 end
             end
         end
+    elseif(command == "testStart") then
+        event.startEvent(g_savedata.worldEvents[1])
+    elseif(command == "testEnd") then
+        event.endEvent(g_savedata.worldEvents[1])
     else
         printDebug("Invalid command! Commands are: start, end, debug, setting\nAdvanced Debug Commands: superDebug, sample, panic, vehicles, fail, data", false, peer_id);
     end
@@ -538,9 +682,9 @@ end
 function startStorm()
     printDebug("(startStorm) called", true)
     season = server.getSeasonalEvent()
-    if season == enum.SEASONAL_EVENTS.CHRISTMAS and false then
+    if season == enum.SEASONAL_EVENTS.CHRISTMAS then
         server.notify(-1, "Broadcast", "A blizzard is on the horizon.", 4)
-    elseif season == enum.SEASONAL_EVENTS.HALLOWEEN or true then
+    elseif season == enum.SEASONAL_EVENTS.HALLOWEEN then
         server.notify(-1, "Broadcast", "Something is forming on the horizon...", 4)
     else
         server.notify(-1, "Broadcast", "A storm is on the horizon.", 4)
@@ -691,6 +835,9 @@ end
 function isTickID(id, rate)
     return (g_savedata.tick_counter + id) % rate == 0
 end
+
+
+
 
 --- Credit: Toastery (USE: Distance checking)
 ---@param x1 number x coordinate of position 1

@@ -14,7 +14,9 @@
     ],
     "Lua.diagnostics.disable": [
         "lowercase-global",
-        "unbalanced-assignments"
+        "unbalanced-assignments",
+        "missing-fields",
+        "duplicate-set-field"
     ],
     "editor.inlayHints.fontSize": 11,
     "editor.inlayHints.padding": false,

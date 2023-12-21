@@ -1,4 +1,5 @@
 {
+    "Lua.workspace.ignoreDir": ["_build/out/release"],
     "Lua.workspace.library": [
         "c:/Users/justi/Documents/Visual Studio/The Storm Addon/",
         "c:/Users/justi/.vscode/extensions/nameouschangey.lifeboatapi-0.0.33/assets/lua/Common/",

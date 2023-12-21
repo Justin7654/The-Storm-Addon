@@ -4,12 +4,17 @@
 -- GitHub: <GithubLink>
 -- Workshop: <WorkshopLink>
 
+--Libraries
+require("libs.enum")
+require("libs.event")
+
 ---@class WorldEvent
 ---@field missionLocation string The name of the mission location in the addon editor
----@field mapLabelLocation string The name of the zone of whitch to place the map label in the mission location. If nil, it will be placed in the center of the mission location
+---@field mapLabelTracked string The tag of the vehicle to place the map label. If nil, it will be placed in the center of the mission location
 ---@field mapLabelType integer The type of map label to use. See enum.MAP_LABEL.LABEL_TYPES
 ---@field limit integer The maximum amount of this event at a single time. If nil, it will be unlimited
 ---@field weight integer The weight of the event. The higher the weight, the more likely it is to be chosen
+---@field currentSpawned integer The amount of this event currently spawned. If nil, create a value and assign to 0
 
 time = {
 	second = 60,
@@ -53,26 +58,19 @@ g_savedata = {
     },
     worldEvents = {
         {
-            missionLocation = "Temp",
-            mapLebelLocation = "Tmp",
-            mapLabelType = enum.MAP_LABEL.LABEL_TYPES.CROSS,
-            limit = 1,
-            weight = 1,
-        },
-        {
             missionLocation = "LIGHTHOUSE_OB_BLOCKAGE",
             mapLebelLocation = "Tmp",
             mapLabelType = enum.MAP_LABEL.LABEL_TYPES.CROSS,
             limit = 1,
             weight = 1,
+            currentSpawned = 0,
         },
-        
     },
     powerFailures = {},
     playerVehicles = {},
     playerMoodStates = {},
 }
-b = g_savedata.worldEvents[1]
+
 settingConversionData = {
     VOLCANOS = "bool",
     POWER_FAILURES = "bool",
@@ -434,7 +432,7 @@ end
 
 function onCustomCommand(full_message, peer_id, is_admin, is_auth, prefix, command, ...)    
     if prefix ~= "?storm" or not is_admin then return end
-    printDebug("Command Entered: "..full_message..". From peer ".. tostring(peer_id), false, 0)
+    if peer_id ~= 0 then printDebug("Command Entered: "..full_message..". From peer ".. tostring(peer_id), false, 0) end
 
     local arg = table.pack(...)
 
@@ -487,7 +485,10 @@ function onCustomCommand(full_message, peer_id, is_admin, is_auth, prefix, comma
         end
     end
     elseif(command == "sample") then
+        old = g_savedata.debug
+        g_savedata.debug = true
         sampleWeather(server.getPlayerPos(peer_id))
+        g_savedata.debug = old
     elseif(command == "panic") then
         storm = g_savedata.storm
         storm.active = false
@@ -538,6 +539,10 @@ function onCustomCommand(full_message, peer_id, is_admin, is_auth, prefix, comma
                 end
             end
         end
+    elseif(command == "testStart") then
+        event.startEvent(g_savedata.worldEvents[1])
+    elseif(command == "testEnd") then
+        event.endEvent(g_savedata.worldEvents[1])
     else
         printDebug("Invalid command! Commands are: start, end, debug, setting\nAdvanced Debug Commands: superDebug, sample, panic, vehicles, fail, data", false, peer_id);
     end
@@ -547,9 +552,9 @@ end
 function startStorm()
     printDebug("(startStorm) called", true)
     season = server.getSeasonalEvent()
-    if season == enum.SEASONAL_EVENTS.CHRISTMAS and false then
+    if season == enum.SEASONAL_EVENTS.CHRISTMAS then
         server.notify(-1, "Broadcast", "A blizzard is on the horizon.", 4)
-    elseif season == enum.SEASONAL_EVENTS.HALLOWEEN or true then
+    elseif season == enum.SEASONAL_EVENTS.HALLOWEEN then
         server.notify(-1, "Broadcast", "Something is forming on the horizon...", 4)
     else
         server.notify(-1, "Broadcast", "A storm is on the horizon.", 4)
