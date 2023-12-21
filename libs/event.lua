@@ -39,6 +39,8 @@ function event.startEvent(event)
         printDebug("ERR: Failed to get location data!\n  addon_index: "..tostring(addon_index).."\n  location_index: "..tostring(location_index))
         return false
     end
+    
+    tileMatrix = server.getTileTransform(matrix.translation(0,0,0), location_data.tile)
 
     for i = 0, location_data.component_count - 1 do
         printDebug("Location data component "..i.." of "..location_data.component_count)
@@ -53,12 +55,14 @@ function event.startEvent(event)
             end
         end
     end
-
+    
     for i in pairs(missionVehicles) do
         vehicleData = missionVehicles[i] ---@type SWAddonComponentData
-        vehicleID = server.spawnAddonVehicle(vehicleData.transform, addon_index, vehicleData.id)
+        
+        transform = matrix.multiply(tileMatrix, vehicleData.transform)
+        vehicleID = server.spawnAddonVehicle(transform, addon_index, vehicleData.id)
         server.setVehicleShowOnMap(vehicleID, true)
-        printDebug("Spawned vehicle "..vehicleData.id.."! YOU DID IT!!!!!!!!")
+        printDebug("Spawned vehicle "..vehicleData.id)
     end
     --location_index, is_success = server.spawnNamedAddonLocation(event.missionLocation)
     --locationData = server.getLocationData(addon_index, location_index)
