@@ -58,7 +58,7 @@ g_savedata = {
     },
     worldEvents = {
         {
-            missionLocation = "LIGHTHOUSE_OB_BLOCKAGE",
+            missionLocation = "KEY LIGHTHOUSE OB",
             mapLebelLocation = "Tmp",
             mapLabelType = enum.MAP_LABEL.LABEL_TYPES.CROSS,
             limit = 1,

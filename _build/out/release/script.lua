@@ -105,11 +105,61 @@ event = {}
 ---Loads a given event
 ---@param event WorldEvent The event to load
 function event.startEvent(event)
+    printDebug("Spawning event!")
     if event == nil then
         printDebug("(event.startEvent) event is nil!")
         return false
     end
-    ---
+    
+    if event.currentSpawned > event.limit then
+        printDebug("(event.startEvent) Limit reached for this event. This should not be happening!", true, -1)
+        return false
+    end
+
+    missionVehicles = {}
+    trackedVehicle = nil
+
+    addon_index = server.getAddonIndex()
+    location_index = server.getLocationIndex(addon_index, event.missionLocation)
+    location_data, is_success = server.getLocationData(addon_index, location_index)
+    
+    if location_index == 4294967295 then
+        printDebug("ERR: Failed to get location index! \n  addon_index: "..tostring(addon_index).."\n  name: "..event.missionLocation.."\n  location_index: "..tostring(location_index))
+        printDebug("This may be because the location name is incorrect.")
+        return false
+    end
+
+    if is_success == false then
+        printDebug("ERR: Failed to get location data!\n  addon_index: "..tostring(addon_index).."\n  location_index: "..tostring(location_index))
+        return false
+    end
+
+    for i = 0, location_data.component_count - 1 do
+        printDebug("Location data component "..i.." of "..location_data.component_count)
+        vehicleData = server.getLocationComponentData(addon_index, location_index, i)
+        table.insert(missionVehicles, vehicleData)
+        tags = vehicleData.tags
+        for x in pairs(tags) do
+            tag = tags[x]
+            if tag == "track" then
+                printDebug("Found tracked vehicle!")
+                trackedVehicle = vehicleData
+            end
+        end
+    end
+
+    for i in pairs(missionVehicles) do
+        vehicleData = missionVehicles[i] ---@type SWAddonComponentData
+        vehicleID = server.spawnAddonVehicle(vehicleData.transform, addon_index, vehicleData.id)
+        server.setVehicleShowOnMap(vehicleID, true)
+        printDebug("Spawned vehicle "..vehicleData.id.."! YOU DID IT!!!!!!!!")
+    end
+    --location_index, is_success = server.spawnNamedAddonLocation(event.missionLocation)
+    --locationData = server.getLocationData(addon_index, location_index)
+    --server.getLocationComponentData(addon_index, location_index, )
+    
+
+    printDebug("Spawned event "..event.missionLocation)
 end
 
 ---Ends a given event
@@ -188,7 +238,7 @@ g_savedata = {
     },
     worldEvents = {
         {
-            missionLocation = "LIGHTHOUSE_OB_BLOCKAGE",
+            missionLocation = "KEY LIGHTHOUSE OB",
             mapLebelLocation = "Tmp",
             mapLabelType = enum.MAP_LABEL.LABEL_TYPES.CROSS,
             limit = 1,
