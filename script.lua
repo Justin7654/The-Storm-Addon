@@ -10,11 +10,15 @@ require("libs.event")
 
 ---@class WorldEvent
 ---@field missionLocation string The name of the mission location in the addon editor
----@field mapLabelTracked string The tag of the vehicle to place the map label. If nil, it will be placed in the center of the mission location
 ---@field mapLabelType integer The type of map label to use. See enum.MAP_LABEL.LABEL_TYPES
+---@field mapLabelName string The text under the map label
 ---@field limit integer The maximum amount of this event at a single time. If nil, it will be unlimited
 ---@field weight integer The weight of the event. The higher the weight, the more likely it is to be chosen
----@field currentSpawned integer The amount of this event currently spawned. If nil, create a value and assign to 0
+
+---@class WorldEventData
+---@field trackedVehicle SWAddonComponentData The tracked vehicle
+---@field missionVehicles SWAddonComponentData[] The vehicles in the event
+---@field mapLabelId integer The id of the map label for the tracked vehicle
 
 time = {
 	second = 60,
@@ -59,12 +63,16 @@ g_savedata = {
     worldEvents = {
         {
             missionLocation = "KEY LIGHTHOUSE OB",
-            mapLebelLocation = "Tmp",
             mapLabelType = enum.MAP_LABEL.LABEL_TYPES.CROSS,
+            mapLabelName = "Track blockage",
             limit = 1,
             weight = 1,
-            currentSpawned = 0,
         },
+        --Idea: Debris on track
+    },
+    worldEventData = {
+        ---Table with the key being the mission location name
+        ---Inside each key is a array of data for each event
     },
     powerFailures = {},
     playerVehicles = {},
@@ -539,10 +547,16 @@ function onCustomCommand(full_message, peer_id, is_admin, is_auth, prefix, comma
                 end
             end
         end
-    elseif(command == "testStart") then
-        event.startEvent(g_savedata.worldEvents[1])
-    elseif(command == "testEnd") then
-        event.endEvent(g_savedata.worldEvents[1])
+    elseif(command == "eventStart") then
+        randomEvent = event.getRandomEvent(arg[1] or 0)
+        if randomEvent ~= nil then
+            printDebug("Spawning event!", false, peer_id)
+            event.startEvent(randomEvent)
+        else
+            printDebug("All events in  use", false, peer_id)
+        end
+    elseif(command == "eventClean") then
+        event.cleanEvents(true)
     else
         printDebug("Invalid command! Commands are: start, end, debug, setting\nAdvanced Debug Commands: superDebug, sample, panic, vehicles, fail, data", false, peer_id);
     end
@@ -588,6 +602,7 @@ function endStorm()
     end
 
     setupStartingConditions()
+    event.cleanEvents(true)
 end
 
 --- Sets the starting conditions value
@@ -674,8 +689,8 @@ end
 
 --- Prints a message to the chat
 --- @param message string The message to send
---- @param requiresDebug nil If false, the message will be sent even if debug isnt enabled
---- @param peer_id nil Not required, for if you want to send it to a specific player
+--- @param requiresDebug? boolean If false, the message will be sent even if debug isnt enabled
+--- @param peer_id? integer Not required, for if you want to send it to a specific player
 function printDebug(message, requiresDebug, peer_id)
     if requiresDebug == nil then requiresDebug = true end
     if((requiresDebug and g_savedata.debug) or requiresDebug == false) then
@@ -692,6 +707,7 @@ function superDebug(message)
     end
 end
 
+---Checks if theres a seasonal event active
 --- @param event integer the event you want to check
 --- @return boolean isEvent if the event is the current event
 function isEvent(event)

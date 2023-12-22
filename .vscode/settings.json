@@ -16,7 +16,8 @@
         "lowercase-global",
         "unbalanced-assignments",
         "missing-fields",
-        "duplicate-set-field"
+        "duplicate-set-field",
+        "duplicate-doc-field"
     ],
     "editor.inlayHints.fontSize": 11,
     "editor.inlayHints.padding": false,
