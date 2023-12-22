@@ -548,6 +548,7 @@ function onCustomCommand(full_message, peer_id, is_admin, is_auth, prefix, comma
             end
         end
     elseif(command == "eventStart") then
+        printDebug(stringFromTable(event))
         randomEvent = event.getRandomEvent(arg[1] or 0)
         if randomEvent ~= nil then
             printDebug("Spawning event!", false, peer_id)

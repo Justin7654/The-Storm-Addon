@@ -141,48 +141,49 @@ end
 ---@param event WorldEvent The event to check
 ---@return boolean Whether or not the event is currently available
 function event.getAvaibility(event)
-    if event.missionLocation == nil then
-        printDebug("(event.getAvaibility) event.missionLocation is nil!")
-        return false
-    end
     --Find the max
     max = nil
-    for i =1, #g_savedata.worldEvents do
-        if g_savedata.worldEvents[i].missionLocation == event.missionLocation then
-            max = g_savedata.worldEvents[i].max
-        end
+    for i in pairs(g_savedata.worldEvents) do
+        if g_savedata.worldEvents[i] == event then max = g_savedata.worldEvents[i].limit end
     end
 
     if max == nil then
-        printDebug("event.getAbaibility) Unable to find event with the same missionLocation name! missionLocation: "..event.missionLocation)
+        printDebug("event.getAvaibility) Unable to find event with the same missionLocation name! missionLocation: "..event.missionLocation)
         return false
     end
     --Check if we have reached the max
-
-    currentNumber = #(g_savedata.worldEvents[event.missionLocation])
+    typeList = g_savedata.worldEventData[event.missionLocation]
+    if typeList == nil then currentNumber = 0
+    else currentNumber = #typeList end
     return max > currentNumber
 end
 
+MAX_ATTEMPTS = 20
 ---Returns a random weighted event that is currently available
 --- @param seed nil The seed to use for the random number generator. If nil, the current seed will be used
 --- @return WorldEvent|nil EventData The event that was chosen
-function event.getRandomEvent(seed)
+function event.getRandomEvent(seed, attempt)
+    if attempt == nil then attempt = 0 end
+    if attempt > MAX_ATTEMPTS then
+        printDebug("Max attempts reached! Returning nil")
+        return nil
+    end
     math.randomseed(seed or 0, server.getTimeMillisec())
     options = g_savedata.worldEvents
     totalWeight = 0
-    for i, event in ipairs(options) do
-        totalWeight = totalWeight + event.weight
+    for i, eventOption in ipairs(options) do
+        totalWeight = totalWeight + eventOption.weight
     end
     random = math.random(0, totalWeight)
     for i in ipairs(options) do
-        event = options[i]
-        random = random - event.weight
+        currentEvent = options[i]
+        random = random - currentEvent.weight
         if random <= 0 then
-            isAvailable = event.getAvaibility(event)
+            isAvailable = event.getAvaibility(currentEvent)
             if isAvailable then
-                return event
+                return currentEvent
             else
-                return event.getRandomEvent((seed+1) or 1)
+                return event.getRandomEvent((seed+1) or 1, attempt + 1)
             end
         end
     end
