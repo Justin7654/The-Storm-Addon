@@ -68,7 +68,13 @@ g_savedata = {
             limit = 1,
             weight = 1,
         },
-        --Idea: Debris on track
+        {
+            missionLocation = "TRACK STRAIGHT FORK LEFT ROT_2",
+            mapLabelType = enum.MAP_LABEL.LABEL_TYPES.CROSS,
+            mapLabelName = "Track blockage",
+            limit = 1,
+            weight = 1,
+        }
     },
     worldEventData = {
         ---Table with the key being the mission location name

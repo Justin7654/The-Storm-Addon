@@ -33,6 +33,7 @@ function event.startEvent(event)
     missionVehicleData = {}
     missionVehicles = {}
     trackedVehicle = nil
+    mapLabelId = server.getMapID()
 
     addon_index = server.getAddonIndex()
     location_index = server.getLocationIndex(addon_index, event.missionLocation)
@@ -75,7 +76,7 @@ function event.startEvent(event)
             printDebug("Spawning label on tracked vehicle!", true, -1)
             x, y, z = matrix.position(transform)
             ---@diagnostic disable-next-line: param-type-mismatch
-            server.addMapLabel(-1, server.getMapID(), event.mapLabelType, event.mapLabelName, x, z)
+            server.addMapLabel(-1, mapLabelId, event.mapLabelType, event.mapLabelName, x, z)
         end
     end
     
@@ -83,7 +84,7 @@ function event.startEvent(event)
     if g_savedata.worldEventData == nil then g_savedata.worldEventData = {} end
     if g_savedata.worldEventData[event.missionLocation] == nil then g_savedata.worldEventData[event.missionLocation] = {} end
 
-    table.insert(g_savedata.worldEventData[event.missionLocation], {missionVehicles = missionVehicles, trackedVehicle = trackedVehicle, mapLabelId = trackedVehicle.id})
+    table.insert(g_savedata.worldEventData[event.missionLocation], {missionVehicles = missionVehicles, trackedVehicle = trackedVehicle, mapLabelId = mapLabelId})
 
     printDebug("Spawned event "..event.missionLocation)
 
@@ -126,12 +127,8 @@ function event.cleanEvents(is_instant)
         end
         --Delete the map label
         if currentEvent.mapLabelId ~= nil then
-            is_success = server.removeMapLabel(-1, currentEvent.mapLabelId)
-            if is_success == false then
-                printDebug("(events.cleanEvents) ERR: Failed to remove map label with id "..tostring(currentEvent.mapLabelId).."!")
-            else
-                printDebug("(events.cleanEvents) Removed map label with id "..tostring(currentEvent.mapLabelId))
-            end
+            printDebug("Removing map label with id of "..currentEvent.mapLabelId)
+            server.removeMapLabel(-1, currentEvent.mapLabelId)
         end
     end
     g_savedata.worldEventData = {}
