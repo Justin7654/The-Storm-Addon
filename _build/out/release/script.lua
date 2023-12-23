@@ -137,7 +137,7 @@ function event.startEvent(event)
         printDebug("This may be because the location name is incorrect.")
         return false
     end
-
+    
     if is_success == false then
         printDebug("ERR: Failed to get location data!\n  addon_index: "..tostring(addon_index).."\n  location_index: "..tostring(location_index))
         return false
@@ -150,7 +150,7 @@ function event.startEvent(event)
         vehicleData = server.getLocationComponentData(addon_index, location_index, i)
         table.insert(missionVehicleData, vehicleData)
         tags = vehicleData.tags
-        if util.hasTag(tags, "track") then
+        if util.hasTag(tags, "track") then  
             printDebug("Found tracked vehicle!")
             trackedVehicle = vehicleData
         end
@@ -279,6 +279,41 @@ function event.getRandomEvent(seed, attempt)
     end
     --printDebug("(event.getRandomEvent) WARNING: FAILED TO GET RANDOM EVENT!\nSeed: "..seed.."\nTotal Weight: "..totalWeight.."\nRandom: "..random.."\nOptions: "..#options, true, -1)
     return nil
+end
+
+
+---Goes through all possible events, and checks if its even possible for them to spawn in (i.e the tile it's on does not exist on the map)
+---@return table removed A table containing all events that were removed
+function event.validateEvents()
+    removed = {}
+    for i, _ in ipairs(g_savedata.worldEvents) do
+        event = g_savedata.worldEvents[i]
+        addon_index = server.getAddonIndex()
+        location_index = server.getLocationIndex(addon_index, event.missionLocation)
+        if location_index == 4294967295 then
+            printDebug("ERR: Failed to get location index! \n  addon_index: "..tostring(addon_index).."\n  name: "..event.missionLocation.."\n  location_index: "..tostring(location_index))
+            printDebug("This may be because the location name is incorrect.")
+            table.insert(removed, event)
+            table.remove(g_savedata.worldEvents, i)
+            goto continue
+        end
+        location_data, is_success = server.getLocationData(addon_index, location_index)
+        if is_success == false then
+            printDebug("ERR: Failed to get location data!\n  addon_index: "..tostring(addon_index).."\n  location_index: "..tostring(location_index))
+            table.insert(removed, event)
+            table.remove(g_savedata.worldEvents, i)
+            goto continue
+        end
+        tileMatrix = server.getTileTransform(matrix.translation(0,0,0), location_data.tile)
+        x,y,z = matrix.position(tileMatrix)
+        if x == 0 and y == 0 and z == 0 then
+            printDebug("Removed event with name '"..event.missionLocation.."' because it's tile does not exist on the map!")
+            table.insert(removed, event)
+            table.remove(g_savedata.worldEvents, i)
+        end
+        ::continue::
+    end
+    return removed
 end
 
 
@@ -458,6 +493,8 @@ enum = {
 function onCreate(is_world_create)
     if g_savedata.settings.MIN_LENGTH > g_savedata.settings.MAX_LENGTH then g_savedata.settings.MIN_LENGTH = g_savedata.settings.MAX_LENGTH end
     if g_savedata.settings.VOLCANOS == nil then g_savedata.settings.VOLCANOS = true end
+
+    if is_world_create then event.validateEvents() end
 end
 
 function onTick(game_ticks)
@@ -828,7 +865,6 @@ function onCustomCommand(full_message, peer_id, is_admin, is_auth, prefix, comma
             end
         end
     elseif(command == "eventStart") then
-        printDebug(stringFromTable(event))
         randomEvent = event.getRandomEvent(arg[1] or 0)
         if randomEvent ~= nil then
             printDebug("Spawning event!", false, peer_id)
@@ -838,6 +874,8 @@ function onCustomCommand(full_message, peer_id, is_admin, is_auth, prefix, comma
         end
     elseif(command == "eventClean") then
         event.cleanEvents(true)
+    elseif(command == "eventValidate") then
+        event.validateEvents()
     else
         printDebug("Invalid command! Commands are: start, end, debug, setting\nAdvanced Debug Commands: superDebug, sample, panic, vehicles, fail, data", false, peer_id);
     end

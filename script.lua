@@ -184,6 +184,8 @@ enum = {
 function onCreate(is_world_create)
     if g_savedata.settings.MIN_LENGTH > g_savedata.settings.MAX_LENGTH then g_savedata.settings.MIN_LENGTH = g_savedata.settings.MAX_LENGTH end
     if g_savedata.settings.VOLCANOS == nil then g_savedata.settings.VOLCANOS = true end
+
+    if is_world_create then event.validateEvents() end
 end
 
 function onTick(game_ticks)
@@ -554,7 +556,6 @@ function onCustomCommand(full_message, peer_id, is_admin, is_auth, prefix, comma
             end
         end
     elseif(command == "eventStart") then
-        printDebug(stringFromTable(event))
         randomEvent = event.getRandomEvent(arg[1] or 0)
         if randomEvent ~= nil then
             printDebug("Spawning event!", false, peer_id)
@@ -564,6 +565,10 @@ function onCustomCommand(full_message, peer_id, is_admin, is_auth, prefix, comma
         end
     elseif(command == "eventClean") then
         event.cleanEvents(true)
+    elseif(command == "eventValidate") then
+        event.validateEvents()
+    elseif(command == "eventVerify") then
+        printDebug("cleanEvent: ")
     else
         printDebug("Invalid command! Commands are: start, end, debug, setting\nAdvanced Debug Commands: superDebug, sample, panic, vehicles, fail, data", false, peer_id);
     end
