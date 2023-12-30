@@ -1,10 +1,10 @@
 {
     "Lua.workspace.ignoreDir": ["_build/out/release"],
     "Lua.workspace.library": [
-        "e:/Documents/Visual Studio/The Storm Addon/",
+        "f:/Documents/Visual Studio/The Storm Addon/",
         "c:/Users/justi/.vscode/extensions/nameouschangey.lifeboatapi-0.0.33/assets/lua/Common/",
         "c:/Users/justi/.vscode/extensions/nameouschangey.lifeboatapi-0.0.33/assets/lua/Addon/",
-        "e:/Documents/Visual Studio/The Storm Addon/_build/libs/"
+        "f:/Documents/Visual Studio/The Storm Addon/_build/libs/"
     ],
     "lifeboatapi.stormworks.libs.gitLibraries": [
         {
