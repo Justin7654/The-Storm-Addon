@@ -1,4 +1,3 @@
-
 ---@diagnostic disable: undefined-doc-param
 -- Author: Justin
 -- GitHub: <GithubLink>
