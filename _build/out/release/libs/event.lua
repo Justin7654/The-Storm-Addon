@@ -109,8 +109,10 @@ function event.cleanEvents(is_instant)
     printDebug("(events.cleanEvents) Found "..#activeEvents.." events")
     --Clean
     printDebug("(events.cleanEvents) Cleaning...")
-    for i in pairs(activeEvents) do
-        currentEvent = activeEvents[i] ---@type WorldEventData
+    totalCleaned = 0
+    totalFailed = 0
+    for x in pairs(activeEvents) do
+        currentEvent = activeEvents[x] ---@type WorldEventData
         vehicles = currentEvent.missionVehicles
         for i in pairs(vehicles) do
             vehicleID = vehicles[i] ---@type SWAddonComponentData
@@ -120,8 +122,10 @@ function event.cleanEvents(is_instant)
             is_success = server.despawnVehicle(vehicleID, is_instant)
             if is_success == false then
                 printDebug("(events.cleanEvents) ERR: Failed to despawn vehicle with id "..tostring(vehicleID).."!")
+                totalFailed = totalFailed + 1
             else
                 printDebug("(events.cleanEvents) Despawned vehicle with id "..tostring(vehicleID))
+                totalCleaned = totalCleaned + 1
             end
             ::continue::
         end
@@ -131,6 +135,7 @@ function event.cleanEvents(is_instant)
             server.removeMapLabel(-1, currentEvent.mapLabelId)
         end
     end
+    printDebug("(events.cleanEvents) Cleanup complete. Cleaned "..totalCleaned.." vehicles and failed to clean "..totalFailed.." vehicles")
     g_savedata.worldEventData = {}
     return true
 end

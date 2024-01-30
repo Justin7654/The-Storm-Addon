@@ -202,8 +202,10 @@ function event.cleanEvents(is_instant)
     printDebug("(events.cleanEvents) Found "..#activeEvents.." events")
     --Clean
     printDebug("(events.cleanEvents) Cleaning...")
-    for i in pairs(activeEvents) do
-        currentEvent = activeEvents[i] ---@type WorldEventData
+    totalCleaned = 0
+    totalFailed = 0
+    for x in pairs(activeEvents) do
+        currentEvent = activeEvents[x] ---@type WorldEventData
         vehicles = currentEvent.missionVehicles
         for i in pairs(vehicles) do
             vehicleID = vehicles[i] ---@type SWAddonComponentData
@@ -213,8 +215,10 @@ function event.cleanEvents(is_instant)
             is_success = server.despawnVehicle(vehicleID, is_instant)
             if is_success == false then
                 printDebug("(events.cleanEvents) ERR: Failed to despawn vehicle with id "..tostring(vehicleID).."!")
+                totalFailed = totalFailed + 1
             else
                 printDebug("(events.cleanEvents) Despawned vehicle with id "..tostring(vehicleID))
+                totalCleaned = totalCleaned + 1
             end
             ::continue::
         end
@@ -224,6 +228,7 @@ function event.cleanEvents(is_instant)
             server.removeMapLabel(-1, currentEvent.mapLabelId)
         end
     end
+    printDebug("(events.cleanEvents) Cleanup complete. Cleaned "..totalCleaned.." vehicles and failed to clean "..totalFailed.." vehicles")
     g_savedata.worldEventData = {}
     return true
 end
@@ -495,6 +500,9 @@ function onCreate(is_world_create)
     if g_savedata.settings.VOLCANOS == nil then g_savedata.settings.VOLCANOS = true end
 
     if is_world_create then event.validateEvents() end
+
+    --Standardized Discovery Message
+    server.command(([[AddonDiscoveryAPI discovery "%s" --category:"Gameplay" --version:"%s"]]):format("The Storm", "1.0"))
 end
 
 function onTick(game_ticks)
@@ -552,11 +560,10 @@ function tickStorm()
         windValue = tween(currentWeather.wind, settings.WIND_AMOUNT, tweenPosition, tweenTime)
         rainValue = tween(currentWeather.rain, settings.RAIN_AMOUNT, tweenPosition, tweenTime)
 
-
-        printDebug("Tween Position: "..tostring(tweenPosition).."/"..tostring(g_savedata.settings.WIND_LENGTH), true)
-        printDebug("Fog val: ".. tostring(fogValue), true)
-        printDebug("Wind val: "..tostring(windValue), true)
-        printDebug("Rain val: "..tostring(rainValue), true)
+        superDebug("Tween Position: "..tostring(tweenPosition).."/"..tostring(g_savedata.settings.WIND_LENGTH))
+        superDebug("Fog val: ".. tostring(fogValue))
+        superDebug("Wind val: "..tostring(windValue))
+        superDebug("Rain val: "..tostring(rainValue))
 
         server.setWeather(fogValue, rainValue, windValue)
 
@@ -644,21 +651,18 @@ function tickStorm()
         tweenTime = g_savedata.settings.WIND_LENGTH; --The time in ticks that the tween will last
         
         hostPos = server.getPlayerPos(0);
-        --currentWeather = server.getWeather(hostPos); --Gets the weather at the hosts location
         startWeather = g_savedata.storm["startConditions"]
         sample = sampleWeather(hostPos)
-        endWeather = sampleWeather(hostPos)
         
         fogValue = tween(startWeather.fog, sample.fog, tweenPosition, tweenTime)
         windValue = tween(startWeather.wind, sample.wind, tweenPosition, tweenTime)
         rainValue = tween(startWeather.rain, sample.rain, tweenPosition, tweenTime)
 
-
         --printDebug("Tween Position: "..tostring(tweenPosition), true)
-        printDebug("Tween Position: "..tostring(tweenPosition).."/"..tostring(g_savedata.settings.WIND_LENGTH), true)
-        printDebug("Fog val: ".. tostring(fogValue), true)
-        printDebug("Wind val: "..tostring(windValue), true)
-        printDebug("Rain val: "..tostring(rainValue), true)
+        superDebug("Tween Position: "..tostring(tweenPosition).."/"..tostring(g_savedata.settings.WIND_LENGTH))
+        superDebug("Fog val: ".. tostring(fogValue))
+        superDebug("Wind val: "..tostring(windValue))
+        superDebug("Rain val: "..tostring(rainValue))
 
         server.setWeather(fogValue, rainValue, windValue);
 
@@ -876,6 +880,8 @@ function onCustomCommand(full_message, peer_id, is_admin, is_auth, prefix, comma
         event.cleanEvents(true)
     elseif(command == "eventValidate") then
         event.validateEvents()
+    elseif(command == "eventVerify") then
+        printDebug("cleanEvent: ")
     else
         printDebug("Invalid command! Commands are: start, end, debug, setting\nAdvanced Debug Commands: superDebug, sample, panic, vehicles, fail, data", false, peer_id);
     end
@@ -903,7 +909,7 @@ end
 --- Ends the storm (if theres one active)
 function endStorm()
     printDebug("(endStorm) called", true)
-    if storm.active == false then return end
+    if g_savedata.storm.active == false then return end
     season = server.getSeasonalEvent()
     if season == enum.SEASONAL_EVENTS.CHRISTMAS then
         server.notify(-1, "Broadcast", "The blizzard seems to be clearing.", 4)
@@ -921,7 +927,9 @@ function endStorm()
     end
 
     setupStartingConditions()
-    event.cleanEvents(true)
+    printDebug("event.cleanEvents type is "..type(event.cleanEvents))
+    if event.cleanEvents then event.cleanEvents(true)
+    else printDebug("WARNING: Failed to clean events! event.cleanEvents is nil", false, -1) end
 end
 
 --- Sets the starting conditions value
@@ -973,7 +981,7 @@ function sampleWeather(matrix)
     sample = server.getWeather(matrix)
     server.setGameSetting("override_weather", true)
 
-    printDebug("Sampled weather:\nWind: ".. tostring(sample.wind).. "\nRain: ".. tostring(sample.rain).. "\nFog: ".. tostring(sample.fog), true, -1)
+    superDebug("Sampled weather:\nWind: ".. tostring(sample.wind).. "\nRain: ".. tostring(sample.rain).. "\nFog: ".. tostring(sample.fog), true, -1)
     return sample
 end
 

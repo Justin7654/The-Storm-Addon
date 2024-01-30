@@ -186,6 +186,9 @@ function onCreate(is_world_create)
     if g_savedata.settings.VOLCANOS == nil then g_savedata.settings.VOLCANOS = true end
 
     if is_world_create then event.validateEvents() end
+
+    --Standardized Discovery Message
+    server.command(([[AddonDiscoveryAPI discovery "%s" --category:"Gameplay" --version:"%s"]]):format("The Storm", "1.0"))
 end
 
 function onTick(game_ticks)
@@ -243,11 +246,10 @@ function tickStorm()
         windValue = tween(currentWeather.wind, settings.WIND_AMOUNT, tweenPosition, tweenTime)
         rainValue = tween(currentWeather.rain, settings.RAIN_AMOUNT, tweenPosition, tweenTime)
 
-
-        printDebug("Tween Position: "..tostring(tweenPosition).."/"..tostring(g_savedata.settings.WIND_LENGTH), true)
-        printDebug("Fog val: ".. tostring(fogValue), true)
-        printDebug("Wind val: "..tostring(windValue), true)
-        printDebug("Rain val: "..tostring(rainValue), true)
+        superDebug("Tween Position: "..tostring(tweenPosition).."/"..tostring(g_savedata.settings.WIND_LENGTH))
+        superDebug("Fog val: ".. tostring(fogValue))
+        superDebug("Wind val: "..tostring(windValue))
+        superDebug("Rain val: "..tostring(rainValue))
 
         server.setWeather(fogValue, rainValue, windValue)
 
@@ -335,21 +337,18 @@ function tickStorm()
         tweenTime = g_savedata.settings.WIND_LENGTH; --The time in ticks that the tween will last
         
         hostPos = server.getPlayerPos(0);
-        --currentWeather = server.getWeather(hostPos); --Gets the weather at the hosts location
         startWeather = g_savedata.storm["startConditions"]
         sample = sampleWeather(hostPos)
-        endWeather = sampleWeather(hostPos)
         
         fogValue = tween(startWeather.fog, sample.fog, tweenPosition, tweenTime)
         windValue = tween(startWeather.wind, sample.wind, tweenPosition, tweenTime)
         rainValue = tween(startWeather.rain, sample.rain, tweenPosition, tweenTime)
 
-
         --printDebug("Tween Position: "..tostring(tweenPosition), true)
-        printDebug("Tween Position: "..tostring(tweenPosition).."/"..tostring(g_savedata.settings.WIND_LENGTH), true)
-        printDebug("Fog val: ".. tostring(fogValue), true)
-        printDebug("Wind val: "..tostring(windValue), true)
-        printDebug("Rain val: "..tostring(rainValue), true)
+        superDebug("Tween Position: "..tostring(tweenPosition).."/"..tostring(g_savedata.settings.WIND_LENGTH))
+        superDebug("Fog val: ".. tostring(fogValue))
+        superDebug("Wind val: "..tostring(windValue))
+        superDebug("Rain val: "..tostring(rainValue))
 
         server.setWeather(fogValue, rainValue, windValue);
 
@@ -596,7 +595,7 @@ end
 --- Ends the storm (if theres one active)
 function endStorm()
     printDebug("(endStorm) called", true)
-    if storm.active == false then return end
+    if g_savedata.storm.active == false then return end
     season = server.getSeasonalEvent()
     if season == enum.SEASONAL_EVENTS.CHRISTMAS then
         server.notify(-1, "Broadcast", "The blizzard seems to be clearing.", 4)
@@ -614,7 +613,9 @@ function endStorm()
     end
 
     setupStartingConditions()
-    event.cleanEvents(true)
+    printDebug("event.cleanEvents type is "..type(event.cleanEvents))
+    if event.cleanEvents then event.cleanEvents(true)
+    else printDebug("WARNING: Failed to clean events! event.cleanEvents is nil", false, -1) end
 end
 
 --- Sets the starting conditions value
@@ -666,7 +667,7 @@ function sampleWeather(matrix)
     sample = server.getWeather(matrix)
     server.setGameSetting("override_weather", true)
 
-    printDebug("Sampled weather:\nWind: ".. tostring(sample.wind).. "\nRain: ".. tostring(sample.rain).. "\nFog: ".. tostring(sample.fog), true, -1)
+    superDebug("Sampled weather:\nWind: ".. tostring(sample.wind).. "\nRain: ".. tostring(sample.rain).. "\nFog: ".. tostring(sample.fog), true, -1)
     return sample
 end
 
