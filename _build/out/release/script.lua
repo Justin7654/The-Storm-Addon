@@ -1,5 +1,4 @@
  
-
 ---@diagnostic disable: undefined-doc-param
 -- Author: Justin
 -- GitHub: <GithubLink>
@@ -100,6 +99,9 @@ enum = {
 --- If you have any issues, please report them here: https://github.com/nameouschangey/STORMWORKS_VSCodeExtension/issues - by Nameous Changey
 util = {}
 
+---@param tags table The list of tags to search through
+---@param tag string the tag to check for
+---@return boolean isPresent Weather or not the tag is present in the list 
 function util.hasTag(tags, tag)
     for i in pairs(tags) do
         if tags[i] == tag then
@@ -845,11 +847,6 @@ function onCustomCommand(full_message, peer_id, is_admin, is_auth, prefix, comma
     elseif(command == "data") then
         if arg[1] ==  "true" then peer_id = -1 end
         printDebug("Data: "..stringFromTable(g_savedata), false, peer_id)        
-    elseif(command == "random") then
-        amount = arg[1] or 1
-        for i = 1, amount do
-            printDebug("Random number 1-500: "..tostring(randomRange(1,500)), false, peer_id)
-        end
     elseif(command == "validate") then
         for setting in pairs(g_savedata.settings) do
             printDebug("Validating... "..tostring(setting), false, peer_id)
@@ -880,8 +877,6 @@ function onCustomCommand(full_message, peer_id, is_admin, is_auth, prefix, comma
         event.cleanEvents(true)
     elseif(command == "eventValidate") then
         event.validateEvents()
-    elseif(command == "eventVerify") then
-        printDebug("cleanEvent: ")
     else
         printDebug("Invalid command! Commands are: start, end, debug, setting\nAdvanced Debug Commands: superDebug, sample, panic, vehicles, fail, data", false, peer_id);
     end
@@ -927,7 +922,8 @@ function endStorm()
     end
 
     setupStartingConditions()
-    printDebug("event.cleanEvents type is "..type(event.cleanEvents))
+    printDebug("event.cleanEvents type is "..type(event.cleanEvents), false, -1)
+    printDebug(event.cleanEvents, false, -1)
     if event.cleanEvents then event.cleanEvents(true)
     else printDebug("WARNING: Failed to clean events! event.cleanEvents is nil", false, -1) end
 end

@@ -3,7 +3,7 @@
     "Lua.workspace.library": [
         "f:/Documents/Visual Studio/The Storm Addon/",
         "c:/Users/justi/.vscode/extensions/nameouschangey.lifeboatapi-0.0.33/assets/lua/Common/",
-        "c:/Users/justi/.vscode/extensions/nameouschangey.lifeboatapi-0.0.33/assets/lua/Addon/",
+        "c:/Users/justi/.vscode/extensions/nameouschangey.lifeboatapi-0.0.33/assets/lua/Microcontroller/",
         "f:/Documents/Visual Studio/The Storm Addon/_build/libs/"
     ],
     "lifeboatapi.stormworks.libs.gitLibraries": [
